@@ -1,0 +1,5 @@
+1. 각각의 노드 마다 info 추가
+2. influx db랑 연동
+3. export 코드 추가, 양식 정하기
+4. json reader 구현 (js, java 코드 모두 실행 가능하도록)
+5. config 파일 jav에서 json으로 변경

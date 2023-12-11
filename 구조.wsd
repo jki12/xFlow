@@ -1,0 +1,101 @@
+@startuml "mqtt project"
+
+abstract class Node {
+    -UUID id;
+    -long createdTime;
+    -String type;
+    -String name;
+
+    +JSONObject export();
+}
+
+abstract class ActiveNode {
+    #Thread thread;
+    #long startTime;
+    #long interval;
+
+    +void start();
+    +void stop();
+
+    +void process();
+    +void preprocess();
+    +void postprocess();
+    +void run();
+}
+
+class Wire {
+    -UUID id;
+    -BlockingQueue<Message> messageQue;
+
+    +int hashCode();
+    +boolean equals();
+}
+
+interface Output {
+    wireOut();
+}
+
+interface Input {
+    void wireIn();
+}
+
+class FunctionNode {
+    -Hashset<Wire> inWires;
+    -Hashset<Wire> outWires;
+    -Executable function;
+    -String lang;
+}
+
+class MqttInNode {
+    -Hashset<Wire> outWires;
+    -String uri;
+    -String fromTopic;
+}
+
+class MqttOutNode {
+    -Hashset<Wire> inWires;
+    -String uri;
+    -IMqttClient client;
+}
+
+class DebugNode {
+    -Hashset<Wire> inWires;
+}
+
+abstract class Message {
+    -UUID id;
+}
+
+class JsonMessage {
+    -JSONObject content;
+}
+
+Node <|-- ActiveNode
+
+ActiveNode <|-- MqttInNode
+ActiveNode <|-- MqttOutNode
+ActiveNode <|-- FunctionNode
+ActiveNode <|-- DebugNode
+
+Output <|.. MqttInNode
+Input <|.. MqttOutNode
+Output <|.. FunctionNode
+Input <|.. FunctionNode
+Input <|.. DebugNode
+
+Wire *-- FunctionNode
+Wire *-- MqttInNode
+Wire *-- MqttOutNode
+Wire *-- DebugNode
+
+Message <|-- JsonMessage
+Message *-- Wire
+
+FunctionNode <|-- preprocessNode
+FunctionNode <|-- postprocessNode
+
+FunctionNode <|-- JsFunctionNode
+
+
+
+@enduml
