@@ -12,6 +12,8 @@ import com.nhnacademy.message.JsonMessage;
 import com.nhnacademy.message.Message;
 import com.nhnacademy.node.ActiveNode;
 
+import lombok.Getter;
+
 /**
  * 데이터를 받아서 modbus의 pdu 부분을 만드는 class. 각각의 key값의 데이터 분량은 2byte로 가정하고 제작.
  * <p>
@@ -28,12 +30,13 @@ import com.nhnacademy.node.ActiveNode;
  * <p>
  * pdu의 앞 데이터는 register address, 뒤는 value.
  */
+@Getter
 public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
 
-    private final Set<Wire> inputWires = new HashSet<>();
-    private final Set<Wire> outputWires = new HashSet<>();
+    public final Set<Wire> inputWires = new HashSet<>();
+    public final Set<Wire> outputWires = new HashSet<>();
 
-    protected ModbusMapperMtoR(String name) {
+    public ModbusMapperMtoR(String name) {
         super(name);
     }
 
@@ -52,26 +55,22 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         readMessage();
     }
 
-    private void readMessage() {
+    public void readMessage() {
         for (Wire wire : inputWires) {
             var messageQueue = wire.getMessageQue();
             if (!wire.getMessageQue().isEmpty()) {
                 Message message = messageQueue.poll();
-                if (message != null) {
-                    JSONObject content = ((JsonMessage) message).getContent();
-                    if (content != null) {
-                        int transactionId = content.getInt("transactionId");
-                        int unitId = content.getInt("UnidID");
-                        int register = content.getInt("register");
-                        int value = content.getInt("value");
-                        convertToModbus(transactionId, unitId, register, value);
-                    }
-                }
+                JSONObject content = ((JsonMessage) message).getContent();
+                int transactionId = content.getInt("transactionId");
+                int unitId = content.getInt("UnidID");
+                int register = content.getInt("register");
+                int value = content.getInt("value");
+                convertToModbus(transactionId, unitId, register, value);
             }
         }
     }
 
-    private void convertToModbus(int transactionId, int unitId, int register, int value) {
+    public void convertToModbus(int transactionId, int unitId, int register, int value) {
         byte[] byteTransactionId = convertIntToByte(transactionId);
         byte[] byteUnitId = convertIntToByte(unitId);
         byte[] byteRegister = convertIntToByte(register);
@@ -90,14 +89,14 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         spreadMessage(pduJsonMessage);
     }
 
-    private byte[] convertIntToByte(int value) {
+    public byte[] convertIntToByte(int value) {
         byte[] bytes = new byte[2];
         bytes[0] = (byte) (value >> 8);
         bytes[1] = (byte) value;
         return bytes;
     }
 
-    private JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] pduData) {
+    public JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] pduData) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactionId", headerTransactionId);
         jsonObject.put("unitId", headerUnitId);
@@ -106,7 +105,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         return jsonObject;
     }
 
-    private void spreadMessage(JSONObject pduJson) {
+    public void spreadMessage(JSONObject pduJson) {
         Message message = new JsonMessage(pduJson);
 
         for (Wire wire : outputWires) {
