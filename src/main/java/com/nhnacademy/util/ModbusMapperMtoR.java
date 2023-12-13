@@ -13,11 +13,20 @@ import com.nhnacademy.message.Message;
 import com.nhnacademy.node.ActiveNode;
 
 /**
- * 데이터를 받아서 modbus의 pdu 부분을 만드는 class.
+ * 데이터를 받아서 modbus의 pdu 부분을 만드는 class. 각각의 key값의 데이터 분량은 2byte로 가정하고 제작.
  * <p>
- * 와이어는 전부 JSON만 받을 수 있기에 pdu를 byte[]로 만들었지만,
- * {pdu: bytep[]} 와 같이 Json으로 만들었음.
- * 
+ * 와이어는 전부 JSON만 받을 수 있기에 pdu를 byte[]로 만들고, json으로 변환했음.
+ * <p>
+ * 형태를 예를 들자면,
+ * <p>
+ * {transactionId : 1234}
+ * <p>
+ * {unitID : 4567}
+ * <p>
+ * {pdu : 1234,12345}
+ * 이런 식.
+ * <p>
+ * pdu의 앞 데이터는 register address, 뒤는 value.
  */
 public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
 
@@ -62,12 +71,6 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         }
     }
 
-    /**
-     * 레지스터랑 value는 2byte로.
-     * 
-     * @param register
-     * @param value
-     */
     private void convertToModbus(int transactionId, int unitId, int register, int value) {
         byte[] byteTransactionId = convertIntToByte(transactionId);
         byte[] byteUnitId = convertIntToByte(unitId);
