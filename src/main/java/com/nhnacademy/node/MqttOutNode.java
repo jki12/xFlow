@@ -1,6 +1,8 @@
 package com.nhnacademy.node;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,6 +17,7 @@ import com.nhnacademy.Wire;
 import com.nhnacademy.exception.UnsupportedDataTypeException;
 import com.nhnacademy.message.JsonMessage;
 import com.nhnacademy.message.Message;
+import com.nhnacademy.util.MqttClientManager;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +32,35 @@ public class MqttOutNode extends ActiveNode implements Input {
     private IMqttClient client;
     
     public MqttOutNode() {
-        this(DEFAULT_URI);
+        this("MqttOutNode");
     }
 
-    public MqttOutNode(String uri) {
-        super("MqttOuNode");
+    public MqttOutNode(String name) {
+        this(DEFAULT_URI, name);
+    }
+
+    public MqttOutNode(String uri, String name) {
+        super(name);
 
         this.uri = uri;
+        preprocess();
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject obj = super.toJson();
+        obj.put("type", "mqtt out");
+        obj.put("qos", "");
+        
+        List<String> wires = new ArrayList<>();
+
+        for(Wire wire: outWires){
+            wires.add(wire.getId().toString());
+        }
+
+        obj.put("wire", wires.toString());
+
+        return obj;
     }
 
     @Override
@@ -49,12 +74,10 @@ public class MqttOutNode extends ActiveNode implements Input {
     @Override
     public void preprocess() {
         try {
-            UUID id = UUID.randomUUID();
-
             MqttConnectOptions options = new MqttConnectOptions();
             options.setAutomaticReconnect(true);
 
-            client = new MqttClient(uri, id.toString());
+            client = MqttClientManager.getMqttClient(uri);
             client.connect(options);
             
         } catch (Exception e) {
@@ -72,7 +95,7 @@ public class MqttOutNode extends ActiveNode implements Input {
                 JSONObject content = ((JsonMessage) msg).getContent();
                 
                 try {
-                    client.publish("test/" + content.getString("topic"), new MqttMessage(content.getJSONObject("payload").toString().getBytes()));
+                    client.publish(content.getString("topic"), new MqttMessage(content.getJSONObject("payload").toString().getBytes()));
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                 }
