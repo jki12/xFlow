@@ -109,4 +109,5 @@ class ModbusMapperMtoRTest {
         Wire outputWire = modbusMapperMtoR.getOutputWires().iterator().next();
         assertEquals(1, outputWire.getMessageQue().size());
     }
+
 }
