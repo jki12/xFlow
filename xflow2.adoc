@@ -1,0 +1,155 @@
+# IoT Platform에 적용할 packet process을 개발하라
+
+## 구성
+
+Packet process의 구성은 다음과 같다.
+
+image::./image/packet_processing_engine.svg[]
+
+Packet process는 외부 시스템과 내부 요소들로 구성된다.
+
+* packet 흐름과 데이터 처리를 위한 node(파란색)
+* 외부 연동을 위한 client/server(초록색)
+* MQTT Broker, MODBUS/TCP server/client등의 외부 장치 또는 시스템(붉은색)
+
+
+## 구성 예
+
+개발될 packet process는 다음과 같은 구성으로 서비스 가능하다.
+
+### MQTT to MQTT
+
+image::./image/mqtt_to_mqtt.svg[]
+
+* IoT 서비스에서 가장 많이 사용되는 프로토콜로 이종의 서비스를 연결한다.
+* 서비스간 topic이나 데이터 구성이 다를 경우, 이에 대한 변경 작업을 수행한다.
+
+### MQTT to MODBUS
+
+
+image::./image/mqtt_to_mb.svg[]
+
+* 산업 현장에서 사용되고 있는 자동화 시스템에 새로운 센서나 디바이스가 연결될 수 있도록 프로토콜 변환 기능을 수행한다.
+* 다양한 정보를 포함할 수 있는 MQTT와 register기반의 MODBUS간 상호 연동이 가능하도록 변환한다.
+* 상호 연동을 위한 정보를 데이터베이스에서 별도 관리한다.
+
+### MODBUS to MQTT
+
+
+image::./image/mb_to_mqtt.svg[]
+
+* 산업 현장에서 설치되어 운영되고 있는 자동화 설비에서 데이터를 가져와 최신 IoT platform에서 데이터를 가공할 수 있도록 지원한다.
+
+### MODBUS to MODBUS
+
+image::./image/mb_to_mb.svg[]
+
+* 산업 현장에서 설치되어 있는 수많은 자동화 설비들을 하나의 통합된 시스템으로 구성하기 위해서는 설정 정보의 변경이나 망 구성 변경등의 작업이 필요하다. 
+* 이러한 작업은 기존 설비 운영에 영향을 줄 수 있으므로, 기존 설비의 운영 상태를 유지하며 새로운 시스템 통합이 가능하도록 논리적 장치를 생성하여 지원한다.
+
+
+## 요구 사항
+
+Packet process는 지원 프로토콜의 종류가 다른 시스템간 연결을 지원한다.
+
+### 데이터 처리를 위한 Node를 구성하라.
+
+* Node는 **재사용 가능한 형태**로 구성되어야 한다.
+* Node의 **입/출력 메시지에 대해 정의**되어야 한다.
+* Node의 설정은 외부에서 설정 가능해야 한다.
+** flow를 구성하는 단계나 동작 중 node 관리 모듈에서 처리 가능하다.
+** 특정한 서버에 접속하도록 소스 코드내에 고정되는 것은 허용되지 않는다.
+* Node의 데이터 수신은 Polling 방식과 Event 방식으로 구성할 수 있다.
+** 선택 구현 가능. Event 방식 추천
+* Node에 연결 가능한 입/출력 Wire의 수는 가변 또는 고정으로 선택할 수 있다.
+** 선택 구현 가능. 가변 추천
+
+#### Server/Client는 별도로 구성하라.
+
+* 개별 Broker에 연결되는 Client는 하나만 생성하도록 구성한다.
+** 동일한 Broker에 두개의 다른 topic으로 subscribe를 할 경우, MQTT In Node는 두개 생성하지만, Client는 하나만 생성하도록 한다.
+** 동일한 MODBUS Server에 접속하는 Client는 하나만 생성하도록 구성한다.
+** 하나 이상의 MODBUS Master를 생성하고, 각기 다른 Register를 요청하더라도 연결 대상이 되는 MODBUS Slave가 동일할 경우 하나의 연결만 유지한다.
+
+
+### 다중 프로토콜을 통합 관리하라.
+
+* MQTT, MODBUS/TCP를 지원한다.
+* 데이터별로 프로토콜 지원을 위한 정보를 가진다.
+** MQTT
+*** Topic 구성 정보
+**** 계층적으로 구성된 topic을 구성하기 위한 정보
+*** 센서 데이터 추출 정보
+**** 다른 서비스에서 MQTT를 통해 데이터를 수신할 경우, 해당 메시지에서 센서 데이터의 위치 정보 추출용
+**** TIG Platform으로 데이터 전송시 메시지 구성용
+** MODBUS
+*** 센서와 Register 맵핑 정보
+
+*보기*
+[cols="1,2,2,4,1"]
+|===
+^|ID ^|Type ^|Device ID ^|위치 ^|Register Address
+^|1 ^|temperature ^|24e124128c067999 ^|nhnacademy/경남캠퍼스/강의실A ^|101
+^|2 ^|temperature ^|24e124785c389818 ^|nhnacademy/경남캠퍼스/강의실A ^|102
+^|3 ^|temperature ^|24e124785c421885 ^|nhnacademy/경남캠퍼스/강의실A ^|103
+^|4 ^|humidity ^|24e124785c389818 ^|nhnacademy/경남캠퍼스/강의실A ^|201
+^|5 ^|humidity ^|24e124785c421885 ^|nhnacademy/경남캠퍼스/강의실A ^|202
+|===
+
+### 통계 정보를 생성하라.
+
+* 모든 구성 요소(Node, Wire 등)은 데이터 처리 과정에서 발생되는 정보를 생성한다.
+** 메시지 수신, 송신, 에러 등
+** 컴포넌트 시작/동작 시간
+
+*보기*
+[cols="1,1,1,1,2,2"]
+|===
+|ID|수신|송신|에러|시작 시간|동작 시간
+|1|1023|1021|2|2023/12/01 11:10:30|230:30:11
+|2|224|121|103|2023/12/01 11:10:32|230:30:09
+|===
+
+### 설정 파일을 구성하라.
+
+* 프로그램 시작시 설정 파일에서 flow(전체 데이터 처리 과정) 정보를 읽어 들여 구성한다.
+* Flow 정보는 다양한 방법 중 선택하여 생성한다.
+** Editor를 이용한 생성
+** 전용 프로그램을 만들어 생성
+** 테스트 코드를 만들어 생성
+** 이외 원하는 방법
+* 설정 파일은 JSON 형식으로 제한한다.
+* 기본 환경 파일과 flow 파일은 분리 가능하다.
+* 설정 파일의 위치는 environment variable, command line argument 등으로 지정 가능하다.
+
+### 단위 테스트 코드를 작성하라.
+
+* Node, Wire등 설계된 클래스의 단위 테스트 코드를 작성하라.
+
+### 서비스 구성하라.
+
+* ems.nhnacademy.com에서 MQTT를 받은 데이터를 이용해 팀별 서비스를 구성하라.
+** 전체, 공간별 dashboard를 생성하라.
+* 외부 연동을 위한 MODBUS/TCP Server를 구성하고, 데이터 제공을 위한 Register Map을 작성하라.
++
+*보기* 
+[cols="1,1,1,1,1,2,4"]
+|===
+^|Address ^|Type ^|Ratio ^|ID ^|Type ^|Device ID ^|위치
+^|101 ^|INT16 ^|1 ^|0.01 ^|temperature ^|24e124128c067999 ^|nhnacademy/경남캠퍼스/강의실A
+^|102 ^|INT16 ^|2 ^|0.01 ^|temperature ^|24e124785c389818 ^|nhnacademy/경남캠퍼스/강의실A
+^|103 ^|INT16 ^|3 ^|0.01 ^|temperature ^|24e124785c421885 ^|nhnacademy/경남캠퍼스/강의실A
+^|201 ^|UINT16 ^|4 ^|1 ^|humidity ^|24e124785c389818 ^|nhnacademy/경남캠퍼스/강의실A
+^|202 ^|UINT16 ^|5 ^|1 ^|humidity ^|24e124785c421885 ^|nhnacademy/경남캠퍼스/강의실A
+|===
+
+* Ratio는 실제 값과 register값의 비율을 말한다.
+** 실제 값 = Register value * Ratio
+** 온도 22.45는 register value로 2245를 돌려 준다.
+
+
+### 프로젝트 개발 문서를 작성하라.
+
+* **구성도**를 그리고, **동작에 대해 설명**하라.
+* **클래스 메뉴얼 작성**하라.
+** 별도의 문서를 작성하지 않고, **JavaDoc을 이용**해 생성하라.
