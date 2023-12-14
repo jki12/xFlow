@@ -1,6 +1,5 @@
 package com.nhnacademy.util;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -74,7 +73,6 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
                 int registerAddress = content.optInt("registerAddress", 0); // 값이 없을 경우 0
 
                 readModbusData(headData, pduData, typeData, registerAddress);
-
             }
         }
     }
@@ -90,8 +88,27 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
 
         byte[] pduArrayData = new byte[pduDataLength]; // 7 ~ n
 
-        for (int i = 0; i < pduDataLength; i++) {
-            pduArrayData[i] = (byte) pduData.getInt(i + 1);
+        if ((functionCode == 3) || (functionCode == 4)) {
+            // Byte count를 읽고, 그 다음부터 데이터를 읽는 처리 로직 추가
+            int byteCount = pduData.getInt(1);
+            if (pduData.length() < byteCount + 2) {
+                throw new IllegalArgumentException();
+            }
+            for (int i = 0; i < byteCount; i++) {
+                pduArrayData[i] = (byte) pduData.getInt(i + 2);
+            }
+        } else if ((functionCode == 6) || (functionCode == 16)) {
+            // Reference number를 읽고, 그 다음부터 데이터를 읽는 처리 로직 추가
+            if (pduData.length() < pduDataLength + 1) {
+                throw new IllegalArgumentException();
+            }
+            for (int i = 0; i < pduDataLength - 1; i++) {
+                pduArrayData[i] = (byte) (pduData.getFloat(i + 2) * 10);
+            }
+        } else {
+            for (int i = 0; i < pduDataLength; i++) {
+                pduArrayData[i] = (byte) (pduData.getFloat(i + 1) * 10);
+            }
         }
 
         JSONObject convertData = convertToJson(transactionId, protocolId, length, unitId, functionCode, pduArrayData,
@@ -102,13 +119,20 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
     public JSONObject convertToJson(int transactionId, int protocolId, int length, int unitId, int functionCode,
             byte[] pduArrayData, int typeData, int registerAddress) {
         JSONObject jsonObject = new JSONObject();
+        JSONArray pduDataArray = new JSONArray();
+
         jsonObject.put("transactionId", transactionId);
         jsonObject.put("protocolId", protocolId);
         jsonObject.put("length", length);
         jsonObject.put("unitId", unitId);
 
         jsonObject.put("functionCode", functionCode);
-        jsonObject.put("pduData", pduArrayData);
+
+        for (byte b : pduArrayData) {
+            pduDataArray.put(b);
+        }
+        // Base64 인코딩 가능성 배제
+        jsonObject.put("pduData", pduDataArray);
 
         jsonObject.put("type", typeData);
         jsonObject.put("registerAddress", registerAddress);
