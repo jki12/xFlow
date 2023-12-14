@@ -23,6 +23,9 @@ public class RuleEngine extends ActiveNode implements Input, Output {
     private Set<Wire> outWires = new HashSet<>();
     private Set<Wire> inWires = new HashSet<>();
 
+    public int getOutWiresSize(){
+        return outWires.size();
+    }
     /* protected RuleEngine(String name) {
         super(name);
     } */
@@ -49,16 +52,16 @@ public class RuleEngine extends ActiveNode implements Input, Output {
                 if (!messageQ.isEmpty()) {
                     Message msg = messageQ.poll();
                     JSONObject content = ((JsonMessage) msg).getContent();
-                    switch (TypeExecute(content)) {
+                    switch (typeExecute(content)) {
                     case 11:
-                        if (SendMqttAndDB(content) != null) {
+                        if (sendMqttAndDB(content) != null) {
                             log.info("Success input DB from Mqtt");
                         } else {
                             throw new FailedInputException();
                         }
                         break;
                     case 12:
-                        JsonMessage outMqttMessage = DBToMqtt(content);
+                        JsonMessage outMqttMessage = dbToMqtt(content);
                         if(outMqttMessage != null){
                             Wire outWire = new Wire();
                             outWire.getMessageQue().add(outMqttMessage);
@@ -68,7 +71,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
                         }
                         break;
                     case 21:
-                        if (ModbusToDB(content)) {
+                        if (modbusToDB(content)) {
                             log.info("Success input DB from Modbus");
                         } else {
                             throw new FailedInputException();
@@ -76,7 +79,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
                         
                         break;
                     case 22:
-                        JsonMessage outModbusMessage = DBToModbus(content);
+                        JsonMessage outModbusMessage = dbToModbus(content);
                         if(outModbusMessage != null){
                             Wire outWire = new Wire();
                             outWire.getMessageQue().add(outModbusMessage);
@@ -100,7 +103,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
     /**
      * decimal Type = 10 ~ mqtt 20 ~ modbus ~1 = inDB ~2 = outDB ~3 = broadcast
      */
-    public int TypeExecute(JSONObject content) {
+    public int typeExecute(JSONObject content) {
         if (content.has("Type")) {
             int decimal = content.getInt("Type");
             return decimal;
@@ -109,9 +112,9 @@ public class RuleEngine extends ActiveNode implements Input, Output {
         }
     }
 
-    public JsonMessage SendMqttAndDB(JSONObject content) {
+    public JsonMessage sendMqttAndDB(JSONObject content) {
         String Euid = content.getString("devEui");
-        String sensor = content.getString("sensor");
+        String sensor = content.getString("sensorType");
         int value = content.getInt("value");
         try {
             repo.setDb(Euid,sensor,value);
@@ -123,9 +126,9 @@ public class RuleEngine extends ActiveNode implements Input, Output {
         }
     }
 
-    public JsonMessage DBToMqtt(JSONObject content) {
+    public JsonMessage dbToMqtt(JSONObject content) {
         String Euid = content.getString("devEui");
-        String sensor = content.getString("sensor");
+        String sensor = content.getString("sensorType");
         int value;
         try {
             value = repo.getDb(Euid,sensor);
@@ -138,9 +141,9 @@ public class RuleEngine extends ActiveNode implements Input, Output {
         }
         
     }
-
-    public boolean ModbusToDB(JSONObject content) {
-        int registerID = content.getInt("adress");
+    // pdu 값에서 value 값을 추출하여 사용하기!
+    public boolean modbusToDB(JSONObject content) {
+        int registerID = content.getInt("registerAddress");
         int value = content.getInt("value");
         try{
             repo.setDb(registerID,value);
@@ -150,8 +153,8 @@ public class RuleEngine extends ActiveNode implements Input, Output {
         }
     }
 
-    public JsonMessage DBToModbus(JSONObject content) {
-        int registerID = content.getInt("adress");
+    public JsonMessage dbToModbus(JSONObject content) {
+        int registerID = content.getInt("registerAddress");
         int value;
         try {
             value = repo.getDb(registerID);
