@@ -49,7 +49,6 @@ public class MqttInNode extends ActiveNode implements Output {
 
         this.uri = uri;
         fromTopic = topic;
-        preprocess();
     }
 
     public void wantnaSee(boolean want) {
@@ -78,6 +77,9 @@ public class MqttInNode extends ActiveNode implements Output {
 
     @Override
     public void wireOut(Wire wire) {
+        if(wire == null) {
+            throw new NullPointerException("wire가 없습니다");
+        }
         outWires.add(wire);
     }
 
