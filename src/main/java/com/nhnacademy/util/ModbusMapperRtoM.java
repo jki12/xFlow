@@ -15,7 +15,6 @@ import com.nhnacademy.message.Message;
 import com.nhnacademy.node.ActiveNode;
 
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 클래스 이름에 괄호가 안들어가져서 이렇게 이름 지음.
@@ -69,28 +68,18 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
                 Message msg = wire.getMessageQue().poll();
                 JSONObject content = ((JsonMessage) msg).getContent();
 
-                int length = content.length();
-                byte[] rawData = ((JsonMessage) msg).getContent().toString().getBytes();
-                byte[] headData = Arrays.copyOfRange(rawData, 0, 7);
-                byte[] pduData = Arrays.copyOfRange(rawData, 8, 8 + length);
-                JSONArray headDataJsonArray = new JSONArray();
-                JSONArray pduDataJsonArray = new JSONArray();
+                JSONArray headData = content.getJSONArray("header");
+                JSONArray pduData = content.getJSONArray("pdu");
+                int typeData = content.getInt("type");
+                int registerAddress = content.optInt("registerAddress", 0); // 값이 없을 경우 0
 
-                for (byte b : headData) {
-                    headDataJsonArray.put(b);
-                }
-
-                for (byte b : pduData) {
-                    pduDataJsonArray.put(b);
-                }
-
-                readModbusData(headDataJsonArray, pduDataJsonArray);
+                readModbusData(headData, pduData, typeData, registerAddress);
 
             }
         }
     }
 
-    public void readModbusData(JSONArray headerData, JSONArray pduData) {
+    public void readModbusData(JSONArray headerData, JSONArray pduData, int typeData, int registerAddress) {
         int transactionId = (headerData.getInt(0) << 8) | (headerData.getInt(1) & 0xFF); // 0, 1
         int protocolId = (headerData.getInt(2) << 8) | (headerData.getInt(3) & 0xFF); // 2, 3
         int length = (headerData.getInt(4) << 8) | (headerData.getInt(5) & 0xFF); // 4, 5
@@ -105,12 +94,13 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
             pduArrayData[i] = (byte) pduData.getInt(i + 1);
         }
 
-        JSONObject convertData = convertToJson(transactionId, protocolId, length, unitId, functionCode, pduArrayData);
+        JSONObject convertData = convertToJson(transactionId, protocolId, length, unitId, functionCode, pduArrayData,
+                typeData, registerAddress);
         spreadMessage(convertData);
     }
 
     public JSONObject convertToJson(int transactionId, int protocolId, int length, int unitId, int functionCode,
-            byte[] pduArrayData) {
+            byte[] pduArrayData, int typeData, int registerAddress) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactionId", transactionId);
         jsonObject.put("protocolId", protocolId);
@@ -119,6 +109,9 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
 
         jsonObject.put("functionCode", functionCode);
         jsonObject.put("pduData", pduArrayData);
+
+        jsonObject.put("type", typeData);
+        jsonObject.put("registerAddress", registerAddress);
 
         return jsonObject;
     }
@@ -131,18 +124,3 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
         }
     }
 }
-
-// public void readModbusData(byte[] modbusData, byte[] pduData) {
-// int transactionId = (modbusData[0] << 8) | (modbusData[1] & 0xFF);
-// int protocolId = (modbusData[2] << 8) | (modbusData[3] & 0xFF);
-// int length = (modbusData[4] << 8) | (modbusData[5] & 0xFF);
-// int unitId = modbusData[6];
-// int functionCode = pduData[7];
-// int pduDataLength = pduData.length - 1;
-
-// byte[] pduArrayData = Arrays.copyOfRange(pduData, 7, 7 + pduDataLength);
-
-// JSONObject convertData = convertToJson(transactionId, protocolId, length,
-// unitId, functionCode, pduArrayData);
-// spreadMessage(convertData);
-// }
