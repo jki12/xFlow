@@ -2,7 +2,7 @@
     "101": {
         "devEui": "24e124128c067999",
         "sensorName": "강의실A(AM107-067999)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -10,7 +10,7 @@
     "103": {
         "devEui": "24e124785c389818",
         "sensorName": "강의실A(EM320-TH-389818)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -18,7 +18,7 @@
     "105": {
         "devEui": "24e124785c421885",
         "sensorName": "강의실A(EM320-TH-421885)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -26,7 +26,7 @@
     "107": {
         "devEui": "24e124126d152969",
         "sensorName": "강의실A(EM500-CO2-152969)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -34,7 +34,7 @@
     "109": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -42,7 +42,7 @@
     "111": {
         "devEui": "4e124785c389010",
         "sensorName": "로비(EM320-389010)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -50,7 +50,7 @@
     "113": {
         "devEui": "24e124136d151368",
         "sensorName": "서버실(EM300-TH-151368)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -58,7 +58,7 @@
     "115": {
         "devEui": "24e124136d151547",
         "sensorName": "창고(EM300-151547)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -66,7 +66,7 @@
     "117": {
         "devEui": "24e124126d152919",
         "sensorName": "사무실(EM500-CO2-152919)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -74,7 +74,7 @@
     "119": {
         "devEui": "24e124136d151485",
         "sensorName": "페어룸(EM300-151485)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 20.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -82,7 +82,7 @@
     "121": {
         "devEui": "24e124126c457594",
         "sensorName": "냉장고(EM500-PT100-457594)",
-        "type": "temperature",
+        "sensor": "temperature",
         "value": 3.0,
         "TransactionID" : null,
         "UnitID" : null
@@ -93,7 +93,7 @@
     "201": {
         "devEui": "24e124128c067999",
         "sensorName": "강의실A(AM107-067999)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -101,7 +101,7 @@
     "203": {
         "devEui": "24e124785c389818",
         "sensorName": "강의실A(EM320-TH-389818)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -109,7 +109,7 @@
     "205": {
         "devEui": "24e124785c421885",
         "sensorName": "강의실A(EM320-TH-421885)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -117,7 +117,7 @@
     "207": {
         "devEui": "24e124126d152969",
         "sensorName": "강의실A(EM500-CO2-152969)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -125,7 +125,7 @@
     "209": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -133,7 +133,7 @@
     "211": {
         "devEui": "24e124785c389010",
         "sensorName": "로비(EM320-389010)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -141,7 +141,7 @@
     "213": {
         "devEui": "24e124136d151368",
         "sensorName": "서버실(EM300-TH-151368)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -149,7 +149,7 @@
     "215": {
         "devEui": "24e124136d151547",
         "sensorName": "창고(EM300-151547)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -157,7 +157,7 @@
     "217": {
         "devEui": "24e124126d152919",
         "sensorName": "사무실(EM500-CO2-152919)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -165,7 +165,7 @@
     "219": {
         "devEui": "24e124136d151485",
         "sensorName": "페어룸(EM300-151485)",
-        "type": "humidity",
+        "sensor": "humidity",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -176,7 +176,7 @@
     "301": {
         "devEui": "24e124128c067999",
         "sensorName": "강의실A(AM107-067999)",
-        "type": "co2",
+        "sensor": "co2",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -184,7 +184,7 @@
     "303": {
         "devEui": "24e124126d152969",
         "sensorName": "강의실A(EM500-CO2-152969)",
-        "type": "co2",
+        "sensor": "co2",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -192,7 +192,7 @@
     "305": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
-        "type": "co2",
+        "sensor": "co2",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -200,7 +200,7 @@
     "307": {
         "devEui": "24e124126d152919",
         "sensorName": "사무실(EM500-CO2-152919)",
-        "type": "co2",
+        "sensor": "co2",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -211,7 +211,7 @@
     "401": {
         "devEui": "24e124128c067999",
         "sensorName": "강의실A(AM107-067999)",
-        "type": "tvoc",
+        "sensor": "tvoc",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -219,7 +219,7 @@
     "403": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
-        "type": "tvoc",
+        "sensor": "tvoc",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -230,7 +230,7 @@
     "501": {
         "devEui": "24e124743d012324",
         "sensorName": "강의실A(WS302-012324)",
-        "type": "leq",
+        "sensor": "leq",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -238,7 +238,7 @@
     "503": {
         "devEui": "24e124743c210238",
         "sensorName": "강의실B(WS302-210238)",
-        "type": "leq",
+        "sensor": "leq",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -249,7 +249,7 @@
     "601": {
         "devEui": "24e124743d012324",
         "sensorName": "강의실A(WS302-012324)",
-        "type": "lmax",
+        "sensor": "lmax",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
@@ -257,7 +257,7 @@
     "603": {
         "devEui": "24e124743c210238",
         "sensorName": "강의실B(WS302-210238)",
-        "type": "lmax",
+        "sensor": "lmax",
         "value": 0,
         "TransactionID" : null,
         "UnitID" : null
