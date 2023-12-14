@@ -33,8 +33,8 @@ import lombok.Getter;
 @Getter
 public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
 
-    public final Set<Wire> inputWires = new HashSet<>();
-    public final Set<Wire> outputWires = new HashSet<>();
+    private final Set<Wire> inputWires = new HashSet<>();
+    private final Set<Wire> outputWires = new HashSet<>();
 
     public ModbusMapperMtoR(String name) {
         super(name);
@@ -55,7 +55,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         readMessage();
     }
 
-    public void readMessage() {
+    private void readMessage() {
         for (Wire wire : inputWires) {
             var messageQueue = wire.getMessageQue();
             if (!wire.getMessageQue().isEmpty()) {
@@ -71,7 +71,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         }
     }
 
-    public void convertToModbus(int transactionId, int unitId, int functionCode, int register, int[] values) {
+    private void convertToModbus(int transactionId, int unitId, int functionCode, int register, int[] values) {
         byte[] byteTransactionId = convertIntToByte(transactionId);
         byte[] byteUnitId = convertIntToByte(unitId);
         byte[] byteFucntionCode = convertIntTo1Byte(functionCode);
@@ -104,20 +104,20 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         spreadMessage(pduJsonMessage);
     }
 
-    public byte[] convertIntToByte(int value) {
+    private byte[] convertIntToByte(int value) {
         byte[] bytes = new byte[2];
         bytes[0] = (byte) (value >> 8);
         bytes[1] = (byte) value;
         return bytes;
     }
 
-    public byte[] convertIntTo1Byte(int value) {
+    private byte[] convertIntTo1Byte(int value) {
         byte[] bytes = new byte[1];
         bytes[0] = (byte) value;
         return bytes;
     }
 
-    public JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] byteFucntionCode,
+    private JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] byteFucntionCode,
             byte[] pduData) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactionId", headerTransactionId);
@@ -129,7 +129,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         return jsonObject;
     }
 
-    public void spreadMessage(JSONObject pduJson) {
+    private void spreadMessage(JSONObject pduJson) {
         Message message = new JsonMessage(pduJson);
 
         for (Wire wire : outputWires) {
