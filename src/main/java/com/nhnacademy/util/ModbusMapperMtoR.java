@@ -76,18 +76,28 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         byte[] byteUnitId = convertIntToByte(unitId);
         byte[] byteFucntionCode = convertIntTo1Byte(functionCode);
         byte[] byteRegister = convertIntToByte(register);
-        byte[] pdu = new byte[byteRegister.length + values.length * 2];
 
-        System.arraycopy(byteTransactionId, 0, pdu, 0, byteTransactionId.length);
-        System.arraycopy(byteUnitId, 0, pdu, byteTransactionId.length, byteUnitId.length);
-        System.arraycopy(byteFucntionCode, 0, pdu, byteTransactionId.length + byteUnitId.length,
-                byteFucntionCode.length);
-        System.arraycopy(byteRegister, 0, pdu, byteTransactionId.length + byteUnitId.length + byteFucntionCode.length,
-                byteRegister.length);
+        int headerSize = byteTransactionId.length + byteUnitId.length + byteFucntionCode.length;
+
+        byte[] header = new byte[headerSize];
+        byte[] pdu = new byte[byteRegister.length + values.length * 2];
+        int currentIndex = 0;
+
+        System.arraycopy(byteTransactionId, 0, header, currentIndex, byteTransactionId.length);
+        currentIndex += byteTransactionId.length;
+
+        System.arraycopy(byteUnitId, 0, header, currentIndex, byteUnitId.length);
+        currentIndex += byteUnitId.length;
+
+        System.arraycopy(byteFucntionCode, 0, pdu, currentIndex, byteFucntionCode.length);
+
+        System.arraycopy(byteRegister, 0, pdu, 0, byteRegister.length);
+        currentIndex = byteRegister.length;
 
         for (int i = 0; i < values.length; i++) {
             byte[] byteValue = convertIntToByte(values[i]);
-            System.arraycopy(byteValue, 0, pdu, byteRegister.length + i * 2, byteValue.length);
+            System.arraycopy(byteValue, 0, pdu, currentIndex, byteValue.length);
+            currentIndex += byteValue.length;
         }
 
         JSONObject pduJsonMessage = makeJsonMessage(byteTransactionId, byteUnitId, byteFucntionCode, pdu);
