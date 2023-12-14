@@ -61,7 +61,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
      * <p>
      * header, pdu 2개의 jsonarray를 만듦.
      */
-    public void readMessage() {
+    private void readMessage() {
         for (Wire wire : inputWires) {
             if (!wire.getMessageQue().isEmpty()) {
                 Message msg = wire.getMessageQue().poll();
@@ -77,7 +77,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
         }
     }
 
-    public void readModbusData(JSONArray headerData, JSONArray pduData, int typeData, int registerAddress) {
+    private void readModbusData(JSONArray headerData, JSONArray pduData, int typeData, int registerAddress) {
         int transactionId = (headerData.getInt(0) << 8) | (headerData.getInt(1) & 0xFF); // 0, 1
         int protocolId = (headerData.getInt(2) << 8) | (headerData.getInt(3) & 0xFF); // 2, 3
         int length = (headerData.getInt(4) << 8) | (headerData.getInt(5) & 0xFF); // 4, 5
@@ -116,7 +116,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
         spreadMessage(convertData);
     }
 
-    public JSONObject convertToJson(int transactionId, int protocolId, int length, int unitId, int functionCode,
+    private JSONObject convertToJson(int transactionId, int protocolId, int length, int unitId, int functionCode,
             byte[] pduArrayData, int typeData, int registerAddress) {
         JSONObject jsonObject = new JSONObject();
         JSONArray pduDataArray = new JSONArray();
@@ -140,7 +140,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
         return jsonObject;
     }
 
-    public void spreadMessage(JSONObject convertData) {
+    private void spreadMessage(JSONObject convertData) {
         Message message = new JsonMessage(convertData);
 
         for (Wire wire : outputWires) {
