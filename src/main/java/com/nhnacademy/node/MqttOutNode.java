@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
@@ -43,7 +41,6 @@ public class MqttOutNode extends ActiveNode implements Input {
         super(name);
 
         this.uri = uri;
-        preprocess();
     }
 
     @Override
@@ -65,6 +62,10 @@ public class MqttOutNode extends ActiveNode implements Input {
 
     @Override
     public void wireIn(Wire wire) {
+        if(wire == null)
+        {
+            throw new NullPointerException("wire가 없습니다");
+        }
         outWires.add(wire);
     }
 
@@ -102,4 +103,5 @@ public class MqttOutNode extends ActiveNode implements Input {
             }
         }
     }
+   
 }
