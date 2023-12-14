@@ -62,30 +62,34 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
                 Message message = messageQueue.poll();
                 JSONObject content = ((JsonMessage) message).getContent();
                 int transactionId = content.getInt("transactionId");
-                int unitId = content.getInt("UnidID");
+                int unitId = content.getInt("unitId");
+                int functionCode = content.getInt("functionCode");
                 int register = content.getInt("register");
                 int value = content.getInt("value");
-                convertToModbus(transactionId, unitId, register, value);
+                convertToModbus(transactionId, unitId, functionCode, register, value);
             }
         }
     }
 
-    public void convertToModbus(int transactionId, int unitId, int register, int value) {
+    public void convertToModbus(int transactionId, int unitId, int functionCode, int register, int value) {
         byte[] byteTransactionId = convertIntToByte(transactionId);
         byte[] byteUnitId = convertIntToByte(unitId);
+        byte[] byteFucntionCode = convertIntTo1Byte(functionCode);
         byte[] byteRegister = convertIntToByte(register);
         byte[] byteValue = convertIntToByte(value);
 
         byte[] headerTransactionId = new byte[2];
         byte[] headerUnitId = new byte[2];
+        byte[] headerFunctionCode = new byte[1];
         byte[] pdu = new byte[byteRegister.length + byteValue.length];
 
         System.arraycopy(byteTransactionId, 0, headerTransactionId, 0, byteTransactionId.length);
         System.arraycopy(byteUnitId, 0, headerUnitId, 0, byteUnitId.length);
+        System.arraycopy(byteFucntionCode, 0, headerFunctionCode, 0, byteFucntionCode.length);
         System.arraycopy(byteRegister, 0, pdu, 0, byteRegister.length);
         System.arraycopy(byteValue, 0, pdu, byteRegister.length, byteValue.length);
 
-        JSONObject pduJsonMessage = makeJsonMessage(headerTransactionId, headerUnitId, pdu);
+        JSONObject pduJsonMessage = makeJsonMessage(headerTransactionId, headerUnitId, byteFucntionCode, pdu);
         spreadMessage(pduJsonMessage);
     }
 
@@ -96,10 +100,18 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         return bytes;
     }
 
-    public JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] pduData) {
+    public byte[] convertIntTo1Byte(int value) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) value;
+        return bytes;
+    }
+
+    public JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] byteFucntionCode,
+            byte[] pduData) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("transactionId", headerTransactionId);
         jsonObject.put("unitId", headerUnitId);
+        jsonObject.put("functionCode", byteFucntionCode);
         jsonObject.put("pdu", pduData);
 
         return jsonObject;
