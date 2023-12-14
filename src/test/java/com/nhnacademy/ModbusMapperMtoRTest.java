@@ -19,7 +19,7 @@ class ModbusMapperMtoRTest {
     static final int unitId = 8;
     static final int functionCode = 0x03;
     static final int register = 63021;
-    static final int value = 22;
+    static final int[] value = { 22, 23, 34 };
 
     @Test
     void init() {
