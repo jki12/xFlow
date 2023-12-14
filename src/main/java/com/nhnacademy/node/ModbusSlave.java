@@ -79,53 +79,54 @@ public class ModbusSlave extends ActiveNode implements Input{
         try (Socket socket = ModbusClientManager.getSocket(host)){
             outputStream = new BufferedOutputStream(socket.getOutputStream());
             for (Wire wire : inWires) {
-                JSONObject msg = ((JsonMessage)wire.getMessageQue().poll()).getContent();
-                byte[] pdu = (byte[]) msg.get("pdu");
-                byte functionCode = (byte) msg.get("functionCode");
-                
-                response = new byte[1024];
-                
-                switch (functionCode) {
-                    case 0x03: // >> 이렇게 쓰면 functionCode가 4로 바뀌나?
+                if(wire.getMessageQue().poll()!= null) {
+                    JSONObject msg = ((JsonMessage)wire.getMessageQue().poll()).getContent();
+                    byte[] pdu = (byte[]) msg.get("pdu");
+                    byte functionCode = (byte) msg.get("functionCode");
+                    
+                    response = new byte[1024];
+                    
+                    switch (functionCode) {
+                        case 0x03:
                         response = makeHeader(msg);
                         response[7] = functionCode;
                         response[8] = (byte) (pdu.length/2);    // byteCount
-
+                        
                         // value
                         for(int i = 0; i < pdu.length/2; i++) {
                             response[9+i*2] = (byte)(pdu[1+i*2] >> 8 | 0xFF);
                             response[9+i*2+1] = (byte)(pdu[1+i*2] | 0xFF);
                         }
                         break;
-
-
-                    case 0x04:
+                        
+                        
+                        case 0x04:
                         response = makeHeader(msg);
                         response[7] = functionCode;
                         response[8] = (byte) (pdu.length/2);    // byteCount
-
+                        
                         // input register
                         for(int i = 0; i < pdu.length/2; i++) {
                             response[9+i*2] = (byte)(pdu[i*2] >> 8 | 0xFF);
                             response[9+i*2+1] = (byte)(pdu[i*2] | 0xFF);
                         }
                         break;
-
+                        
                         //resp과 req의 header 동일
-                    case 0x06:
+                        case 0x06:
                         response = makeHeader(msg);
                         response[7] = functionCode;
-
+                        
                         response[8] = (byte)(pdu[0] >> 8 | 0xFF);
                         response[9] = (byte) (pdu[0] | 0xFF);
                         
                         response[10] = (byte)((pdu[1] >> 8) | 0xFF);
                         response[11] = (byte)(pdu[1] | 0xFF);
                         
-                    case 0x10:
+                        case 0x10:
                         response = makeHeader(msg);
                         response[7] = functionCode;
-
+                        
                         // starting address
                         response[8] = (byte)(pdu[0] >> 8 | 0xFF);
                         response[9] = (byte) (pdu[0] | 0xFF);
@@ -134,9 +135,10 @@ public class ModbusSlave extends ActiveNode implements Input{
                         response[10] = (byte)((pdu.length/2 >> 8) | 0xFF);
                         response[11] = (byte)(pdu.length/2 | 0xFF);
                         break;
-                    default:
-
+                        default:
+                        
                         break;
+                    }
                 }
                 outputStream.write(response);
                 outputStream.flush();
