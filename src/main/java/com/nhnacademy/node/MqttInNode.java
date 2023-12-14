@@ -85,8 +85,6 @@ public class MqttInNode extends ActiveNode implements Output {
 
     @Override
     public void preprocess() {
-        // MqttInNode가 start되는 거랑 상관없이 toJson() 만들려면 
-        // client가 생성하자마자 있어야 한다
         try {
             client = MqttClientManager.getMqttClient(uri); 
             MqttConnectOptions options = new MqttConnectOptions();
