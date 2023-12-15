@@ -87,13 +87,13 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         currentIndex += byteTransactionId.length;
 
         System.arraycopy(byteUnitId, 0, header, currentIndex, byteUnitId.length);
-        currentIndex += byteUnitId.length;
 
-        System.arraycopy(byteFucntionCode, 0, header, currentIndex, byteFucntionCode.length);
+        System.arraycopy(byteFucntionCode, 0, pdu, 0, byteFucntionCode.length);
+        currentIndex += byteFucntionCode.length;
 
-        System.arraycopy(byteRegister, 0, pdu, 0, byteRegister.length);
-
+        System.arraycopy(byteRegister, 0, pdu, currentIndex, byteRegister.length);
         currentIndex = byteFucntionCode.length;
+
         for (int i = 0; i < values.length; i++) {
             byte[] byteValue = convertIntToByte(values[i]);
             System.arraycopy(byteValue, 0, pdu, currentIndex, byteValue.length);
