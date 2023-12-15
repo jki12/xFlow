@@ -78,10 +78,10 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         byte[] byteRegister = convertIntToByte(register);
 
         int headerSize = byteTransactionId.length + byteUnitId.length + byteFucntionCode.length;
+        int currentIndex = 0;
 
         byte[] header = new byte[headerSize];
         byte[] pdu = new byte[byteRegister.length + values.length * 2];
-        int currentIndex = 0;
 
         System.arraycopy(byteTransactionId, 0, header, currentIndex, byteTransactionId.length);
         currentIndex += byteTransactionId.length;
@@ -89,11 +89,11 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         System.arraycopy(byteUnitId, 0, header, currentIndex, byteUnitId.length);
         currentIndex += byteUnitId.length;
 
-        System.arraycopy(byteFucntionCode, 0, pdu, currentIndex, byteFucntionCode.length);
+        System.arraycopy(byteFucntionCode, 0, header, currentIndex, byteFucntionCode.length);
 
         System.arraycopy(byteRegister, 0, pdu, 0, byteRegister.length);
-        currentIndex = byteRegister.length;
 
+        currentIndex = byteFucntionCode.length;
         for (int i = 0; i < values.length; i++) {
             byte[] byteValue = convertIntToByte(values[i]);
             System.arraycopy(byteValue, 0, pdu, currentIndex, byteValue.length);
