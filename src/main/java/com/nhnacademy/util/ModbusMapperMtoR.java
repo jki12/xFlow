@@ -61,12 +61,18 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
             if (!wire.getMessageQue().isEmpty()) {
                 Message message = messageQueue.poll();
                 JSONObject content = ((JsonMessage) message).getContent();
-                int transactionId = content.getInt("transactionId");
-                int unitId = content.getInt("unitId");
-                int functionCode = content.getInt("functionCode");
-                int register = content.getInt("register");
-                int[] values = (int[]) content.get("value");
-                convertToModbus(transactionId, unitId, functionCode, register, values);
+                int type = content.getInt("type");
+                if ((type == 21) || (type == 22)) { // type 걸러내기.
+                    int transactionId = content.getInt("transactionId");
+                    int unitId = content.getInt("unitId");
+                    int functionCode = content.getInt("functionCode");
+                    int register = content.getInt("register");
+                    int[] values = (int[]) content.get("value");
+                    convertToModbus(transactionId, unitId, functionCode, register, values);
+                } else {
+                    throw new IllegalArgumentException();
+                    // TODO exception 추가 제작 필요. 저건 대충 비슷해 보이는거 넣은거.
+                }
             }
         }
     }
