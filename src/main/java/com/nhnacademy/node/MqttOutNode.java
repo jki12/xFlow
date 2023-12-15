@@ -69,7 +69,7 @@ public class MqttOutNode extends ActiveNode implements Input {
         outWires.add(wire);
     }
 
-    /*
+    /**
      * 연결된 wire에서 data를 꺼내 지정된 uri로 보낸다
      */
     @Override
