@@ -113,7 +113,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
     }
 
     public JsonMessage sendMqttAndDB(JSONObject content) {
-        String Euid = content.getString("devEui");
+        String euid = content.getString("devEui");
         String sensor = content.getString("sensorType");
         int value = content.getInt("value");
         try {
@@ -127,11 +127,11 @@ public class RuleEngine extends ActiveNode implements Input, Output {
     }
 
     public JsonMessage dbToMqtt(JSONObject content) {
-        String Euid = content.getString("devEui");
+        String euid = content.getString("devEui");
         String sensor = content.getString("sensorType");
-        int value;
+        double value;
         try {
-            value = repo.getDb(Euid,sensor);
+            value = repo.getDb(euid, sensor);
             content.put("value", value);
             JsonMessage sendMessage = new JsonMessage(content);
             return sendMessage;
@@ -146,7 +146,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
         int registerID = content.getInt("registerAddress");
         int value = content.getInt("value");
         try{
-            repo.setDb(registerID,value);
+            repo.setDb(registerID, value);
             return true;
         }catch(Exception e){
             return false;
