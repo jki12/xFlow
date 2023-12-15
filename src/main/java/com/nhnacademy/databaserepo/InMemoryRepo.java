@@ -97,6 +97,7 @@ public class InMemoryRepo implements Repo {
      * 새로운 값으로 바꿔준다.
      * <p>
      * 이거는 JSONObject 형식이 완전히 지켜져서 들어와야 하기 때문에 효율성이 좋지 않다.
+     * 
      * @deprecated 사용하지 않을거 같은 함수
      * @param jsonObject
      */
@@ -109,58 +110,17 @@ public class InMemoryRepo implements Repo {
         }
     }
 
-    public boolean equalsTest(String key, String devEui, String sensorType){
+    /**
+     * <p>
+     * 해당하는 조건문을 중복하여 사용하기 때문에 중복되는 부분을 함수로 만들었다.
+     * 
+     * @param key
+     * @param devEui
+     * @param sensorType
+     * @return
+     */
+    public boolean equalsTest(String key, String devEui, String sensorType) {
         return getDataValue(key, "devEui").equals(devEui) && getDataValue(key, "sensorType").equals(sensorType);
-    }
-
-    /**
-     * devEui의 값과 sensorType을 주면 해당하는 값을 가진 키 값을 찾아 그 키의 value값을 반환한다.
-     * 
-     * @param devEui     devEui 값을 받아온다.
-     * @param sensorType sensorType 값을 받아온다.
-     * @return 해당하는 값을 가진 키 값의 value값을 반환한다.
-     */
-    public double getValue(String devEui, String sensorType) {
-        Iterator<String> keys = database.keySet().iterator();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            if (equalsTest(key, devEui, sensorType)) {
-                JSONObject json = getMapValues(key);
-                String s = String.valueOf(json.get("value"));
-                return Double.parseDouble(s);
-            }
-        }
-        throw new NoSuchElementException();
-    }
-
-    /**
-     * <p>
-     * 충표씨의 요청으로 만든 setDB 메서드이며 devEui와 sensorType을 가지고 있는 key 값을 찾아
-     * key값에 해당하는 value값을 지정한 값으로 바꾸어 database에 새로 저장하는 함수이다.
-     * <p>
-     * 지정한 값으로 바꾸는데 성공하면 True, 해당하는 키 값을 찾을 수 없거나 바꾸는데 실패하면 False를 반환한다.
-     * <p>
-     * JSONObject를 받아와야 바꿀 수 있는 것이 아니라 특정 값을 통해서 value 값을 바꿀 수 있어 효율성이 있을거라 사료됨
-     * 
-     * @param devEui     devEui 값을 받아온다.
-     * @param sensorType sensorType 값을 받아온다.
-     * @param value      바꾸고 싶은 value값을 받아온다.
-     * @return 값을 바꾸는데 성공하면 True, 키 값이 없거나 바꾸는데 실패시 False를 반환한다.
-     */
-    public boolean setDBValue(String devEui, String sensorType, double value) {
-        Iterator<String> keys = database.keySet().iterator();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            if (equalsTest(key, devEui, sensorType)) {
-                JSONObject outJson = new JSONObject();
-                JSONObject inJson = getMapValues(key);
-                inJson.put("value", value);
-                outJson.put(key, inJson);
-                database.put(key, outJson.get(key));
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -178,6 +138,101 @@ public class InMemoryRepo implements Repo {
         }
 
         throw new NoSuchElementException();
+    }
+
+    /**
+     * devEui의 값과 sensorType을 주면 해당하는 값을 가진 키 값을 찾아 그 키의 속성값과 내용을 JSONObject로 반환한다.
+     * 
+     * @param devEui     devEui 값을 받아온다.
+     * @param sensorType sensorType 값을 받아온다.
+     * @return 해당하는 값을 가진 키 값의 value값을 반환한다.
+     */
+    @Override
+    public JSONObject getData(String devEui, String sensorType) {
+        // TODO Auto-generated method stub
+        Iterator<String> keys = database.keySet().iterator();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            if (equalsTest(key, devEui, sensorType)) {
+                JSONObject json = getMapValues(key);
+                if (!json.isEmpty()) {
+                    JSONObject returnJson = new JSONObject();
+                    returnJson.put("value", json.get("value"));
+                    return json;
+                }
+            }
+        }
+        throw new NoSuchElementException();
+    }
+
+    /**
+     * registerID 값을 주면 해당하는 값을 가진 키 값을 찾아 그 키의 속성값과 내용을 JSONObject로 반환한다.
+     * 
+     * @param registerId registerId값을 받아온다.
+     */
+    @Override
+    public JSONObject getData(String registerId) {
+        // TODO Auto-generated method stub
+        JSONObject json = getMapValues(registerId);
+        JSONObject returnJson = new JSONObject();
+        returnJson.put("value", json.get("value"));
+        return returnJson;
+    }
+
+    /**
+     * <p>
+     * 이 함수는 devEui와 sensorType을 가지고 있는 key 값을 찾아
+     * key값에 해당하는 value값을 지정한 값으로 바꾸어 database에 새로 저장하는 함수이다.
+     * <p>
+     * 지정한 값으로 바꾸는데 성공하면 True, 해당하는 키 값을 찾을 수 없거나 바꾸는데 실패하면 False를 반환한다.
+     * <p>
+     * JSONObject를 받아와야 바꿀 수 있는 것이 아니라 특정 값을 통해서 value 값을 바꿀 수 있어 효율성이 있을거라 사료됨
+     * 
+     * @param devEui     devEui 값을 받아온다.
+     * @param sensorType sensorType 값을 받아온다.
+     * @param value      바꾸고 싶은 value값을 받아온다.
+     * @return 값을 바꾸는데 성공하면 True, 키 값이 없거나 바꾸는데 실패시 False를 반환한다.
+     */
+    @Override
+    public boolean setData(String devEui, String sensorType, double value) {
+        Iterator<String> keys = database.keySet().iterator();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            if (equalsTest(key, devEui, sensorType)) {
+                JSONObject outJson = new JSONObject();
+                JSONObject inJson = getMapValues(key);
+                if (!inJson.isEmpty()) {
+                    inJson.put("value", value);
+                    outJson.put(key, inJson);
+                    database.put(key, outJson.get(key));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * <p>
+     * 이 함수는 registerId에 해당하는 value값을 지정한 값으로 바꾸어 database에 새로 저장하는 함수이다.
+     * <p>
+     * 지정한 값으로 바꾸는데 성공하면 True, 해당하는 키 값을 찾을 수 없거나 바꾸는데 실패하면 False를 반환한다.
+     * 
+     * @param registerId registerId를 받아온다.
+     * @param value      바꾸고 싶은 value값을 받아온다.
+     */
+    @Override
+    public boolean setData(String registerId, double value) {
+        JSONObject outJson = new JSONObject();
+        JSONObject inJson = getMapValues(registerId);
+        if (!inJson.isEmpty()) {
+            inJson.put("value", value);
+            outJson.put(registerId, inJson);
+            database.put(registerId, outJson.get(registerId));
+            return true;
+        }
+
+        return false;
     }
 
     public static void main(String[] args) {
