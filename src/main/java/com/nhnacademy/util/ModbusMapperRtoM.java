@@ -55,15 +55,19 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
      * <p>
      * 메제시를 받으면 JSONArray로 변환.
      * <p>
-     * header, pdu 2개의 jsonarray를 만듦.
+     * pdu의 데이터만 가져와서 register address, value , quantity의 값만 가져오고 나머지는 처리하지 않음.
      */
     public void readMessage() {
         for (Wire wire : inputWires) {
             if (!wire.getMessageQue().isEmpty()) {
                 Message msg = wire.getMessageQue().poll();
                 JSONObject content = ((JsonMessage) msg).getContent();
+                if (!content.has("registerAddress")) {
+                    throw new IllegalArgumentException();
+                }
+
                 JSONArray pduData = content.getJSONArray("pdu");
-                int registerAddress = content.optInt("registerAddress", 0); // 값이 없을 경우 0
+                int registerAddress = content.getInt("registerAddress");
 
                 readModbusData(pduData, registerAddress);
             }
@@ -73,10 +77,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
     public void readModbusData(JSONArray pduData, int registerAddress) {
         int functionCode = pduData.getInt(0); // 7
         int quantity = 0;
-
-        int pduDataLength = pduData.length() - 1;
-
-        byte[] pduArrayData = new byte[pduDataLength]; // 7 ~ n
+        JSONArray value = new JSONArray();
 
         if ((functionCode == 3) || (functionCode == 4)) {
             quantity = ((pduData.getInt(2) << 8) | (pduData.getInt(3) & 0xFF));
@@ -84,45 +85,31 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
 
             if (pduData.length() < byteCount + 2) {
                 throw new IllegalArgumentException();
+            } else {
+                for (int i = 0; i < byteCount; i++) {
+                    value.put(pduData.getInt(i + 2));
+                }
             }
 
-            for (int i = 0; i < byteCount; i++) {
-                pduArrayData[i] = (byte) pduData.getInt(i + 2);
-            }
         } else if ((functionCode == 6) || (functionCode == 16)) {
             quantity = ((pduData.getInt(4) << 8) | (pduData.getInt(5) & 0xFF));
-            if (pduData.length() < pduDataLength + 1) {
-                throw new IllegalArgumentException();
-            }
-            for (int i = 0; i < pduDataLength - 1; i++) {
-                pduArrayData[i] = (byte) (pduData.getFloat(i + 2) * 10);
+
+            for (int i = 0; i < quantity; i++) {
+                value.put(pduData.getInt(i + 2));
             }
         } else {
-            for (int i = 0; i < pduDataLength; i++) {
-                pduArrayData[i] = (byte) (pduData.getFloat(i + 1) * 10);
-            }
+            // functionCode가 3,4 6,16이 아닐 경우에는 처리하지 않음.
         }
+        JSONObject convertData = convertToJson(registerAddress, quantity, value);
 
-        JSONObject convertData = convertToJson(pduArrayData,
-                registerAddress, quantity);
         spreadMessage(convertData);
     }
 
-    public JSONObject convertToJson(
-            byte[] pduArrayData, int registerAddress, int quantity) {
+    public JSONObject convertToJson(int registerAddress, int quantity, JSONArray value) {
         JSONObject jsonObject = new JSONObject();
-        JSONArray pduDataArray = new JSONArray();
-        JSONArray value = new JSONArray();
-
-        jsonObject.put("quantity", quantity);
-
-        for (byte b : pduArrayData) {
-            pduDataArray.put(b);
-        }
-        // Base64 인코딩 가능성 배제
-        jsonObject.put("pduData", pduDataArray);
 
         jsonObject.put("registerAddress", registerAddress);
+        jsonObject.put("quantity", quantity);
         jsonObject.put("value", value);
 
         return jsonObject;
