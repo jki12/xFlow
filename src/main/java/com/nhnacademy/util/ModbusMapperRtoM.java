@@ -21,19 +21,15 @@ import lombok.Getter;
  * Modbus mapper (Register to measurement)
  * <p>
  * Modbus data를 json으로 컨버터하는 class.
- * 헤더는 동일. 뒤에 데이터는 다름.
  * json 형태로 변환해야함.
  * <p>
- * header : Transaction Id(2), protocol Id(2), Length(2), unitId(1)
- * <p>
- * PDU : function code(2), Data(n)
- * BigEndIAN은 데이터를 내보낼 때 하면 되겠지. 굳이 지금 할 필요성은 잘 모르겠음.
+ * 헤더의 데이터를 분리할 필요 없음.
  */
 @Getter
 public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
 
-    private final Set<Wire> inputWires = new HashSet<>();
-    private final Set<Wire> outputWires = new HashSet<>();
+    public final Set<Wire> inputWires = new HashSet<>();
+    public final Set<Wire> outputWires = new HashSet<>();
 
     public ModbusMapperRtoM(String name) {
         super(name);
@@ -61,44 +57,40 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
      * <p>
      * header, pdu 2개의 jsonarray를 만듦.
      */
-    private void readMessage() {
+    public void readMessage() {
         for (Wire wire : inputWires) {
             if (!wire.getMessageQue().isEmpty()) {
                 Message msg = wire.getMessageQue().poll();
                 JSONObject content = ((JsonMessage) msg).getContent();
-
-                JSONArray headData = content.getJSONArray("header");
                 JSONArray pduData = content.getJSONArray("pdu");
-                int typeData = content.getInt("type");
                 int registerAddress = content.optInt("registerAddress", 0); // 값이 없을 경우 0
 
-                readModbusData(headData, pduData, typeData, registerAddress);
+                readModbusData(pduData, registerAddress);
             }
         }
     }
 
-    private void readModbusData(JSONArray headerData, JSONArray pduData, int typeData, int registerAddress) {
-        int transactionId = (headerData.getInt(0) << 8) | (headerData.getInt(1) & 0xFF); // 0, 1
-        int protocolId = (headerData.getInt(2) << 8) | (headerData.getInt(3) & 0xFF); // 2, 3
-        int length = (headerData.getInt(4) << 8) | (headerData.getInt(5) & 0xFF); // 4, 5
-        int unitId = headerData.getInt(6); // 6
+    public void readModbusData(JSONArray pduData, int registerAddress) {
         int functionCode = pduData.getInt(0); // 7
+        int quantity = 0;
 
         int pduDataLength = pduData.length() - 1;
 
         byte[] pduArrayData = new byte[pduDataLength]; // 7 ~ n
 
         if ((functionCode == 3) || (functionCode == 4)) {
-            // Byte count를 읽고, 그 다음부터 데이터를 읽는 처리 로직 추가
+            quantity = ((pduData.getInt(2) << 8) | (pduData.getInt(3) & 0xFF));
             int byteCount = pduData.getInt(1);
+
             if (pduData.length() < byteCount + 2) {
                 throw new IllegalArgumentException();
             }
+
             for (int i = 0; i < byteCount; i++) {
                 pduArrayData[i] = (byte) pduData.getInt(i + 2);
             }
         } else if ((functionCode == 6) || (functionCode == 16)) {
-            // Reference number를 읽고, 그 다음부터 데이터를 읽는 처리 로직 추가
+            quantity = ((pduData.getInt(4) << 8) | (pduData.getInt(5) & 0xFF));
             if (pduData.length() < pduDataLength + 1) {
                 throw new IllegalArgumentException();
             }
@@ -111,22 +103,18 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
             }
         }
 
-        JSONObject convertData = convertToJson(transactionId, protocolId, length, unitId, functionCode, pduArrayData,
-                typeData, registerAddress);
+        JSONObject convertData = convertToJson(pduArrayData,
+                registerAddress, quantity);
         spreadMessage(convertData);
     }
 
-    private JSONObject convertToJson(int transactionId, int protocolId, int length, int unitId, int functionCode,
-            byte[] pduArrayData, int typeData, int registerAddress) {
+    public JSONObject convertToJson(
+            byte[] pduArrayData, int registerAddress, int quantity) {
         JSONObject jsonObject = new JSONObject();
         JSONArray pduDataArray = new JSONArray();
+        JSONArray value = new JSONArray();
 
-        jsonObject.put("transactionId", transactionId);
-        jsonObject.put("protocolId", protocolId);
-        jsonObject.put("length", length);
-        jsonObject.put("unitId", unitId);
-
-        jsonObject.put("functionCode", functionCode);
+        jsonObject.put("quantity", quantity);
 
         for (byte b : pduArrayData) {
             pduDataArray.put(b);
@@ -134,13 +122,13 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
         // Base64 인코딩 가능성 배제
         jsonObject.put("pduData", pduDataArray);
 
-        jsonObject.put("type", typeData);
         jsonObject.put("registerAddress", registerAddress);
+        jsonObject.put("value", value);
 
         return jsonObject;
     }
 
-    private void spreadMessage(JSONObject convertData) {
+    public void spreadMessage(JSONObject convertData) {
         Message message = new JsonMessage(convertData);
 
         for (Wire wire : outputWires) {

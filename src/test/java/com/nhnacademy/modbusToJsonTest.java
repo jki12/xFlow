@@ -14,6 +14,9 @@ import com.nhnacademy.util.ModbusMapperRtoM;
 class modbusToJsonTest {
 
     ModbusMapperRtoM modbusMapperRtoM = new ModbusMapperRtoM("ModbusToJson");
+    private final int typeData = 21;
+    private final int registerAddress = 103;
+    private final int quantity = 3;
 
     @Test
     void init() {
@@ -59,13 +62,16 @@ class modbusToJsonTest {
         pduData.put((byte) 0x09);
         pduData.put((byte) 0x0A);
 
+        int typeData = 21;
+        int registerAddress = 103;
+
         modbusMapperRtoM.wireOut(outWire);
 
         assertEquals(1, modbusMapperRtoM.getOutputWires().size());
 
-        modbusMapperRtoM.readModbusData(headerData, pduData);
-        modbusMapperRtoM.readModbusData(headerData, pduData);
-        modbusMapperRtoM.readModbusData(headerData, pduData);
+        modbusMapperRtoM.readModbusData(headerData, pduData, typeData, registerAddress);
+        modbusMapperRtoM.readModbusData(headerData, pduData, typeData, registerAddress);
+        modbusMapperRtoM.readModbusData(headerData, pduData, typeData, registerAddress);
 
         modbusMapperRtoM.getOutputWires().size();
 
@@ -82,12 +88,12 @@ class modbusToJsonTest {
         int protocolId = 345;
         int length = 567;
         int unitId = 8;
-
         int functionCode = 0x03;
         byte[] pduData = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10 };
+        JSONArray jsonArray = new JSONArray(pduData);
 
         JSONObject result = modbusMapperRtoM.convertToJson(transactionId, protocolId, length, unitId, functionCode,
-                pduData);
+                pduData, typeData, registerAddress, quantity);
 
         assertTrue(result.has("transactionId"));
         assertEquals(transactionId, result.getInt("transactionId"));
@@ -105,7 +111,17 @@ class modbusToJsonTest {
         assertEquals(functionCode, result.getInt("functionCode"));
 
         assertTrue(result.has("pduData"));
-        assertEquals(pduData, result.get("pduData"));
+        assertEquals(jsonArray.getClass(), result.get("pduData").getClass());
+        assertEquals(jsonArray.toString(), ((JSONArray) result.get("pduData")).toString());
+
+        assertTrue(result.has("type"));
+        assertEquals(typeData, result.get("type"));
+
+        assertTrue(result.has("registerAddress"));
+        assertEquals(registerAddress, result.get("registerAddress"));
+
+        assertTrue(result.has("quantity"));
+        assertEquals(quantity, result.get("quantity"));
 
     }
 
@@ -127,9 +143,12 @@ class modbusToJsonTest {
         pduData.put((byte) 0x09);
         pduData.put((byte) 0x0A);
 
+        int typeData = 21;
+        int quantity = 3;
+
         modbusMapperRtoM.wireOut(outWire);
 
-        modbusMapperRtoM.readModbusData(headerData, pduData);
+        modbusMapperRtoM.readModbusData(headerData, pduData, typeData, quantity);
 
         Wire outputWire = modbusMapperRtoM.getOutputWires().iterator().next();
         assertEquals(1, outputWire.getMessageQue().size());
