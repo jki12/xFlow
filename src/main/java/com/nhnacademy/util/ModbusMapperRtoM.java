@@ -31,6 +31,11 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
     public final Set<Wire> inputWires = new HashSet<>();
     public final Set<Wire> outputWires = new HashSet<>();
 
+    private static final String REGISTER_ADDRESS = "registerAddress";
+    private static final String PDU = "pdu";
+    private static final String VALUE = "value";
+    private static final String QUANTITY = "quantity";
+
     public ModbusMapperRtoM(String name) {
         super(name);
     }
@@ -62,18 +67,23 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
             if (!wire.getMessageQue().isEmpty()) {
                 Message msg = wire.getMessageQue().poll();
                 JSONObject content = ((JsonMessage) msg).getContent();
-                if (!content.has("registerAddress")) {
+                if (!content.has(REGISTER_ADDRESS)) {
                     throw new IllegalArgumentException();
                 }
 
-                JSONArray pduData = content.getJSONArray("pdu");
-                int registerAddress = content.getInt("registerAddress");
+                JSONArray pduData = content.getJSONArray(PDU);
+                int registerAddress = content.getInt(REGISTER_ADDRESS);
 
                 readModbusData(pduData, registerAddress);
             }
         }
     }
 
+    /**
+     * 
+     * @param pduData
+     * @param registerAddress
+     */
     public void readModbusData(JSONArray pduData, int registerAddress) {
         int functionCode = pduData.getInt(0); // 7
         int quantity = 0;
@@ -105,12 +115,19 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
         spreadMessage(convertData);
     }
 
+    /**
+     * 
+     * @param registerAddress db address
+     * @param quantity        count
+     * @param value           sensor value
+     * @return
+     */
     public JSONObject convertToJson(int registerAddress, int quantity, JSONArray value) {
         JSONObject jsonObject = new JSONObject();
 
-        jsonObject.put("registerAddress", registerAddress);
-        jsonObject.put("quantity", quantity);
-        jsonObject.put("value", value);
+        jsonObject.put(REGISTER_ADDRESS, registerAddress);
+        jsonObject.put(QUANTITY, quantity);
+        jsonObject.put(VALUE, value);
 
         return jsonObject;
     }
