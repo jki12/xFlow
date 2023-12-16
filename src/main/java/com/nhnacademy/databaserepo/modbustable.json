@@ -4,77 +4,77 @@
         "sensorName": "강의실A(AM107-067999)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "103": {
         "devEui": "24e124785c389818",
         "sensorName": "강의실A(EM320-TH-389818)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "105": {
         "devEui": "24e124785c421885",
         "sensorName": "강의실A(EM320-TH-421885)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "107": {
         "devEui": "24e124126d152969",
         "sensorName": "강의실A(EM500-CO2-152969)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "109": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "111": {
         "devEui": "4e124785c389010",
         "sensorName": "로비(EM320-389010)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "113": {
         "devEui": "24e124136d151368",
         "sensorName": "서버실(EM300-TH-151368)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "115": {
         "devEui": "24e124136d151547",
         "sensorName": "창고(EM300-151547)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "117": {
         "devEui": "24e124126d152919",
         "sensorName": "사무실(EM500-CO2-152919)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "119": {
         "devEui": "24e124136d151485",
         "sensorName": "페어룸(EM300-151485)",
         "sensorType": "temperature",
         "value": 20.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "121": {
         "devEui": "24e124126c457594",
         "sensorName": "냉장고(EM500-PT100-457594)",
         "sensorType": "temperature",
         "value": 3.0,
-        "UnitID" : 1
+        "unitId" : 1
     },
 
 
@@ -84,70 +84,70 @@
         "sensorName": "강의실A(AM107-067999)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "203": {
         "devEui": "24e124785c389818",
         "sensorName": "강의실A(EM320-TH-389818)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "205": {
         "devEui": "24e124785c421885",
         "sensorName": "강의실A(EM320-TH-421885)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "207": {
         "devEui": "24e124126d152969",
         "sensorName": "강의실A(EM500-CO2-152969)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "209": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "211": {
         "devEui": "24e124785c389010",
         "sensorName": "로비(EM320-389010)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "213": {
         "devEui": "24e124136d151368",
         "sensorName": "서버실(EM300-TH-151368)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "215": {
         "devEui": "24e124136d151547",
         "sensorName": "창고(EM300-151547)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "217": {
         "devEui": "24e124126d152919",
         "sensorName": "사무실(EM500-CO2-152919)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "219": {
         "devEui": "24e124136d151485",
         "sensorName": "페어룸(EM300-151485)",
         "sensorType": "humidity",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
 
 
@@ -157,28 +157,28 @@
         "sensorName": "강의실A(AM107-067999)",
         "sensorType": "co2",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "303": {
         "devEui": "24e124126d152969",
         "sensorName": "강의실A(EM500-CO2-152969)",
         "sensorType": "co2",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "305": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
         "sensorType": "co2",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "307": {
         "devEui": "24e124126d152919",
         "sensorName": "사무실(EM500-CO2-152919)",
         "sensorType": "co2",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
 
 
@@ -188,14 +188,14 @@
         "sensorName": "강의실A(AM107-067999)",
         "sensorType": "tvoc",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "403": {
         "devEui": "24e124128c140101",
         "sensorName": "강의실B(AM107-140101)",
         "sensorType": "tvoc",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
 
 
@@ -205,14 +205,14 @@
         "sensorName": "강의실A(WS302-012324)",
         "sensorType": "leq",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "503": {
         "devEui": "24e124743c210238",
         "sensorName": "강의실B(WS302-210238)",
         "sensorType": "leq",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
 
 
@@ -222,13 +222,13 @@
         "sensorName": "강의실A(WS302-012324)",
         "sensorType": "lmax",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     },
     "603": {
         "devEui": "24e124743c210238",
         "sensorName": "강의실B(WS302-210238)",
         "sensorType": "lmax",
         "value": 0,
-        "UnitID" : 1
+        "unitId" : 1
     }
 }
