@@ -1,5 +1,6 @@
 package com.nhnacademy.util;
 
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,20 +16,16 @@ import com.nhnacademy.node.ActiveNode;
 import lombok.Getter;
 
 /**
- * 데이터를 받아서 modbus의 pdu 부분을 만드는 class. 각각의 key값의 데이터 분량은 2byte로 가정하고 제작.
+ * rule engine에서 데이터를 받고, 그걸 재가공. 값을 modbus protocol에 맞춰 byte로 변환.
  * <p>
- * 와이어는 전부 JSON만 받을 수 있기에 pdu를 byte[]로 만들고, json으로 변환했음.
+ * db의 register address 1개에는 값이 1개만. 즉 array를 사용할 필요성이 정당하지 않음.
  * <p>
- * 형태를 예를 들자면,
+ * 고로 폐기.
  * <p>
- * {transactionId : 1234}
- * <p>
- * {unitID : 4567}
- * <p>
- * {pdu : 1234,12345}
- * 이런 식.
- * <p>
- * pdu의 앞 데이터는 register address, 뒤는 value.
+ * register address, value만 받고, 이걸 byte로 변환한 후, 다음 wire에 담기 위해 jsonObject로 만든 후
+ * 보냄.
+ * 어느 정도의 값이 들어올지 모름. 그래서 2byte로 만듦.
+ * 
  */
 @Getter
 public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
@@ -55,87 +52,59 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         readMessage();
     }
 
-    private void readMessage() {
+    public void readMessage() {
         for (Wire wire : inputWires) {
             var messageQueue = wire.getMessageQue();
-            if (!wire.getMessageQue().isEmpty()) {
+            if (!messageQueue.isEmpty()) {
                 Message message = messageQueue.poll();
                 JSONObject content = ((JsonMessage) message).getContent();
-                int type = content.getInt("type");
-                if ((type == 21) || (type == 22)) { // type 걸러내기.
-                    int transactionId = content.getInt("transactionId");
-                    int unitId = content.getInt("unitId");
-                    int functionCode = content.getInt("functionCode");
-                    int register = content.getInt("register");
-                    int[] values = (int[]) content.get("value");
-                    convertToModbus(transactionId, unitId, functionCode, register, values);
-                } else {
-                    throw new IllegalArgumentException();
-                    // TODO exception 추가 제작 필요. 저건 대충 비슷해 보이는거 넣은거.
-                }
+                int register = content.getInt("register");
+                int values = (int) content.getDouble("value");
+                convertToModbus(register, values);
             }
         }
     }
 
-    private void convertToModbus(int transactionId, int unitId, int functionCode, int register, int[] values) {
-        byte[] byteTransactionId = convertIntToByte(transactionId);
-        byte[] byteUnitId = convertIntToByte(unitId);
-        byte[] byteFucntionCode = convertIntTo1Byte(functionCode);
+    public void convertToModbus(int register, int values) {
         byte[] byteRegister = convertIntToByte(register);
+        byte[] byteValues = convertIntToByte(values);
 
-        int headerSize = byteTransactionId.length + byteUnitId.length + byteFucntionCode.length;
-        int currentIndex = 0;
-
-        byte[] header = new byte[headerSize];
-        byte[] pdu = new byte[byteRegister.length + values.length * 2];
-
-        System.arraycopy(byteTransactionId, 0, header, currentIndex, byteTransactionId.length);
-        currentIndex += byteTransactionId.length;
-
-        System.arraycopy(byteUnitId, 0, header, currentIndex, byteUnitId.length);
-
-        System.arraycopy(byteFucntionCode, 0, pdu, 0, byteFucntionCode.length);
-        currentIndex += byteFucntionCode.length;
-
-        System.arraycopy(byteRegister, 0, pdu, currentIndex, byteRegister.length);
-        currentIndex = byteFucntionCode.length;
-
-        for (int i = 0; i < values.length; i++) {
-            byte[] byteValue = convertIntToByte(values[i]);
-            System.arraycopy(byteValue, 0, pdu, currentIndex, byteValue.length);
-            currentIndex += byteValue.length;
-        }
-
-        JSONObject pduJsonMessage = makeJsonMessage(byteTransactionId, byteUnitId, byteFucntionCode, pdu);
+        JSONObject pduJsonMessage = makeJsonMessage(byteRegister, byteValues);
         spreadMessage(pduJsonMessage);
     }
 
-    private byte[] convertIntToByte(int value) {
+    public byte[] convertIntToByte(int value) {
         byte[] bytes = new byte[2];
+
+        // 상위 바이트(8 bit)는 정수 값을 8비트 오른쪽으로 쉬프트하여 얻고,
         bytes[0] = (byte) (value >> 8);
+
+        // 하위 바이트는 정수를 바이트로 타입 캐스팅하여, 자동으로 상위 24bit를 버리고 얻음.
         bytes[1] = (byte) value;
         return bytes;
     }
 
-    private byte[] convertIntTo1Byte(int value) {
-        byte[] bytes = new byte[1];
-        bytes[0] = (byte) value;
-        return bytes;
-    }
-
-    private JSONObject makeJsonMessage(byte[] headerTransactionId, byte[] headerUnitId, byte[] byteFucntionCode,
-            byte[] pduData) {
+    /**
+     * byte[]를 그대로 jsonObject에 넣으면 toString을 통해서 바이트 배열을 문자열로 만들려고 할텐데,
+     * byte[].toString은 우리가 원하는 문자열이 아닌, [a@hashCode의 형태로 나타남.
+     * <p>
+     * byte[]를 jsonObject에 원하는 형태로 넣기 위해서는 바이트 배열을 문자열로 인코딩해야함.
+     * <p>
+     * => Base64를 이용해서 인코딩한 이유.
+     * 
+     * @param byteRegister
+     * @param byteValue
+     * @return
+     */
+    public JSONObject makeJsonMessage(byte[] byteRegister, byte[] byteValue) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("transactionId", headerTransactionId);
-        jsonObject.put("unitId", headerUnitId);
-        jsonObject.put("functionCode", byteFucntionCode);
-
-        jsonObject.put("pdu", pduData);
+        jsonObject.put("registerAddress", Base64.getEncoder().encodeToString(byteRegister));
+        jsonObject.put("value", Base64.getEncoder().encodeToString(byteValue));
 
         return jsonObject;
     }
 
-    private void spreadMessage(JSONObject pduJson) {
+    public void spreadMessage(JSONObject pduJson) {
         Message message = new JsonMessage(pduJson);
 
         for (Wire wire : outputWires) {

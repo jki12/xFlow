@@ -1,9 +1,11 @@
 package com.nhnacademy;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.Base64;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -19,7 +21,7 @@ class ModbusMapperMtoRTest {
     static final int unitId = 8;
     static final int functionCode = 0x03;
     static final int register = 63021;
-    static final int[] value = { 22, 23, 34 };
+    static final int value = 23;
 
     @Test
     void init() {
@@ -59,7 +61,7 @@ class ModbusMapperMtoRTest {
         modbusMapperMtoR.wireIn(inWire);
         modbusMapperMtoR.wireOut(outWire);
 
-        modbusMapperMtoR.convertToModbus(transactionId, unitId, functionCode, register, value);
+        modbusMapperMtoR.convertToModbus(register, value);
 
         assertEquals(1, modbusMapperMtoR.getOutputWires().size());
 
@@ -77,21 +79,18 @@ class ModbusMapperMtoRTest {
 
     @Test
     void makeJsonMessageTest() {
-        byte[] byteTransactionId = { 1, 2 };
-        byte[] byteUnitId = { 3, 4 };
-        byte[] byteFucntionCode = { 0x03 };
+        byte[] byteRegister = { 3 };
         byte[] byteValue = { 5, 6, 7, 8 };
-        JSONObject result = modbusMapperMtoR.makeJsonMessage(byteTransactionId, byteUnitId, byteFucntionCode,
-                byteValue);
+        JSONObject result = modbusMapperMtoR.makeJsonMessage(byteRegister, byteValue);
 
-        assertTrue(result.has("transactionId"));
-        assertEquals(byteTransactionId, result.get("transactionId"));
-        assertTrue(result.has("unitId"));
-        assertEquals(byteUnitId, result.get("unitId"));
-        assertTrue(result.has("functionCode"));
-        assertEquals(byteFucntionCode, result.get("functionCode"));
-        assertTrue(result.has("pdu"));
-        assertEquals(byteValue, result.get("pdu"));
+        String encodedRegister = result.getString("registerAddress");
+        String encodedValue = result.getString("value");
+
+        byte[] decodedRegister = Base64.getDecoder().decode(encodedRegister);
+        byte[] decodedValue = Base64.getDecoder().decode(encodedValue);
+
+        assertArrayEquals(byteRegister, decodedRegister);
+        assertArrayEquals(byteValue, decodedValue);
     }
 
     @Test
@@ -100,9 +99,6 @@ class ModbusMapperMtoRTest {
         Wire outWire = new Wire();
 
         JSONObject dummy = new JSONObject();
-        dummy.put("transactionId", 01);
-        dummy.put("unitId", 00);
-        dummy.put("functionCode", 3);
         dummy.put("register", 107);
         dummy.put("value", 23);
         Message message = new JsonMessage(dummy);
