@@ -52,7 +52,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         readMessage();
     }
 
-    public void readMessage() {
+    private void readMessage() {
         for (Wire wire : inputWires) {
             var messageQueue = wire.getMessageQue();
             if (!messageQueue.isEmpty()) {
@@ -65,7 +65,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         }
     }
 
-    public void convertToModbus(int register, int values) {
+    private void convertToModbus(int register, int values) {
         byte[] byteRegister = convertIntToByte(register);
         byte[] byteValues = convertIntToByte(values);
 
@@ -73,7 +73,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         spreadMessage(pduJsonMessage);
     }
 
-    public byte[] convertIntToByte(int value) {
+    private byte[] convertIntToByte(int value) {
         byte[] bytes = new byte[2];
 
         // 상위 바이트(8 bit)는 정수 값을 8비트 오른쪽으로 쉬프트하여 얻고,
@@ -96,7 +96,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
      * @param byteValue
      * @return
      */
-    public JSONObject makeJsonMessage(byte[] byteRegister, byte[] byteValue) {
+    private JSONObject makeJsonMessage(byte[] byteRegister, byte[] byteValue) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("registerAddress", Base64.getEncoder().encodeToString(byteRegister));
         jsonObject.put("value", Base64.getEncoder().encodeToString(byteValue));
@@ -104,7 +104,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
         return jsonObject;
     }
 
-    public void spreadMessage(JSONObject pduJson) {
+    private void spreadMessage(JSONObject pduJson) {
         Message message = new JsonMessage(pduJson);
 
         for (Wire wire : outputWires) {
