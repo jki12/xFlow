@@ -29,7 +29,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
         return outWires.size();
     }
 
-    protected RuleEngine(String name, Repo repo) {
+    public RuleEngine(String name, Repo repo) {
         super(name);
         this.repo = repo;
 
@@ -54,17 +54,28 @@ public class RuleEngine extends ActiveNode implements Input, Output {
                     JsonMessage responseMessage;
                     Message msg = messageQ.poll();
                     JSONObject content = ((JsonMessage) msg).getContent();
-                    try {
+                    try {0
                         String protocolType = checkProtocolType(content);
                         switch (protocolType) {
                         case TYPE_MQTT:
-                            content = repo.addData(content.getString("devEui"), content.getString("sensorType"),
-                                    content.getDouble("value"));
-                            responseMessage = new JsonMessage(content);
+                            if(repo.addData(content.getString("devEui"), content.getString("sensorType"),content.getDouble("value"))){
+                                content = repo.getData(content.getString("devEui"), content.getString("sensorType"));
+                                responseMessage = new JsonMessage(content);
+                            }else{
+                                log.error("Failed Input data !!");
+                                throw new FailedInputException();
+                            }
+                            
                             break;
                         case TYPE_MODBUS:
-                            content = repo.addData(content.getString("registerId"), content.getDouble("value"));
-                            responseMessage = new JsonMessage(content);
+                            if(repo.addData(content.getString("registerId"), content.getDouble("value"))){
+                                content = repo.getData(content.getString("registerId"));
+                                responseMessage = new JsonMessage(content);
+                            }else{
+                                log.error("Failed Input data !!");
+                                throw new FailedInputException();
+                            }
+                            
                             break;
                         default:
                             throw new UnsupportedProtocolTypeException();
@@ -91,7 +102,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
      * @return
      * <p>지원이 가능한 Protocol이름을 String으로 반환합니다. 지원 가능한 Protocol은 클래스 상단 final로 선언되어 있습니다.
      */
-    private String checkProtocolType(JSONObject content) {
+    public String checkProtocolType(JSONObject content) {
         if (content.has("registerId")) {
             return TYPE_MODBUS;
         } else if ((content.has("devEui")) && (content.has("sensorType"))) {
