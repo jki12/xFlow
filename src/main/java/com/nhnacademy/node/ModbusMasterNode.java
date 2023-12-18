@@ -15,12 +15,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.json.JSONObject;
+
 @Slf4j
 @Getter
 public class ModbusMasterNode extends ActiveNode implements Output {
     private static final int DEFUALT_INTERVAL = 1_000;
     private static final int DEFAULT_BUFFER_SIZE = 1024;
-    private static final short DEFAULT_ADDRESS = 100;
+    private static final short DEFAULT_ADDRESS = 101;
     private static final short DEFAULT_QUANTITY = 2;
     private static final byte DEFAULT_FUNCTION_CODE = 4;
 
@@ -28,7 +30,7 @@ public class ModbusMasterNode extends ActiveNode implements Output {
     private final Info info = new Info();
     private String host;
     private int port;
-    private int transactionId;
+    private short transactionId;
     private byte[] address;
     private byte[] quantity;
     private byte functionCode;
@@ -69,7 +71,8 @@ public class ModbusMasterNode extends ActiveNode implements Output {
                 try {
                     // header 부분
                     byte[] pdu = new byte[] { functionCode, address[0], address[1], quantity[0], quantity[1] };
-                    byte[] mbap = Util.makeMBAP((short) (++transactionId % Short.MAX_VALUE), (short) (pdu.length + 1), (byte) 1);
+                    transactionId %= Short.MAX_VALUE;
+                    byte[] mbap = Util.makeMBAP(++transactionId, (short) (pdu.length + 1), (byte) 1);
                     
                     client.getOutputStream().write(Util.concat(mbap, pdu));
                     client.getOutputStream().flush();
@@ -80,7 +83,10 @@ public class ModbusMasterNode extends ActiveNode implements Output {
                     info.increaseReceiveCount();
                     log.debug("{}", Arrays.toString(Arrays.copyOfRange(bytes, 0, len)));
 
-                    Message msg = new JsonMessage(Util.toJson(bytes, len));
+                    JSONObject content = Util.toJson(bytes, len);
+                    content.put("registerAddress", Util.toShort(address[0], address[1]));
+
+                    Message msg = new JsonMessage(content);
                     for (var wire : outWires) {
                         info.increaseSendCount();
 
