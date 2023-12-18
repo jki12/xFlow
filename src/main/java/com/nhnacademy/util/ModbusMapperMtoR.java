@@ -98,7 +98,7 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
      */
     private JSONObject makeJsonMessage(byte[] byteRegister, byte[] byteValue) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("registerAddress", Base64.getEncoder().encodeToString(byteRegister));
+        jsonObject.put("registerAddress", byteRegister);
         jsonObject.put("value", Base64.getEncoder().encodeToString(byteValue));
 
         return jsonObject;
