@@ -3,35 +3,37 @@ package com.nhnacademy.RuleEngine;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.nhnacademy.Input;
 import com.nhnacademy.Output;
 import com.nhnacademy.Wire;
+import com.nhnacademy.databaserepo.Repo;
 import com.nhnacademy.exception.*;
 import com.nhnacademy.message.JsonMessage;
 import com.nhnacademy.message.Message;
 import com.nhnacademy.node.ActiveNode;
-import com.oracle.truffle.regex.tregex.util.json.JsonObject;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class RuleEngine extends ActiveNode implements Input, Output {
-    // TODO 데이터 베이스 클래스 전체를 받아와서 처리 하자! 어때 즐겁지?
-    private InMemoryRepo repo;
+    private static final String TYPE_MQTT = "mqtt";
+    private static final String TYPE_MODBUS = "modbus";
+
+    private Repo repo;
     private Set<Wire> outWires = new HashSet<>();
     private Set<Wire> inWires = new HashSet<>();
 
-    public int getOutWiresSize(){
+    public int getOutWiresSize() {
         return outWires.size();
     }
-    /* protected RuleEngine(String name) {
+
+    public RuleEngine(String name, Repo repo) {
         super(name);
-    } */
-    protected RuleEngine(String name, InMemoryRepo repo) {
+
         this.repo = repo;
-        super(name);
     }
 
     @Override
@@ -50,47 +52,44 @@ public class RuleEngine extends ActiveNode implements Input, Output {
             for (Wire inWire : inWires) {
                 var messageQ = inWire.getMessageQue();
                 if (!messageQ.isEmpty()) {
+                    JsonMessage responseMessage = null;
                     Message msg = messageQ.poll();
                     JSONObject content = ((JsonMessage) msg).getContent();
-                    switch (typeExecute(content)) {
-                    case 11:
-                        if (sendMqttAndDB(content) != null) {
-                            log.info("Success input DB from Mqtt");
-                        } else {
-                            throw new FailedInputException();
+                    try {
+                        String protocolType = checkProtocolType(content);
+                        switch (protocolType) {
+                        case TYPE_MQTT:
+                            if(repo.addData(content.getString("devEui"), content.getString("sensorType"),content.getDouble("value"))){
+                                content = repo.getData(content.getString("devEui"), content.getString("sensorType"));
+                                responseMessage = new JsonMessage(content);
+                            }else{
+                                log.error("Failed Input data !!");
+                                throw new FailedInputException();
+                            }
+                            
+                            break;
+                        case TYPE_MODBUS:
+                            // TODO scale 같은건 한곳에 저장하거나 staic으로 설정해주세요.
+                            if(repo.addData(String.valueOf(content.getInt("registerAddress")), content.getInt("value") / 10.0)){
+                                content = repo.getData(String.valueOf(content.getInt("registerAddress")));
+                                responseMessage = new JsonMessage(content);
+                            }else{
+                                log.error("Failed Input data !!");
+                                throw new FailedInputException();
+                            }
+                            
+                            break;
+                        default:
+                            throw new UnsupportedProtocolTypeException();
                         }
-                        break;
-                    case 12:
-                        JsonMessage outMqttMessage = dbToMqtt(content);
-                        if(outMqttMessage != null){
-                            Wire outWire = new Wire();
-                            outWire.getMessageQue().add(outMqttMessage);
-                            wireOut(outWire);
-                        }else{
-                            throw new FailedOutputException();
-                        }
-                        break;
-                    case 21:
-                        if (modbusToDB(content)) {
-                            log.info("Success input DB from Modbus");
-                        } else {
-                            throw new FailedInputException();
-                        }
-                        
-                        break;
-                    case 22:
-                        JsonMessage outModbusMessage = dbToModbus(content);
-                        if(outModbusMessage != null){
-                            Wire outWire = new Wire();
-                            outWire.getMessageQue().add(outModbusMessage);
-                            wireOut(outWire);
-                        }else{
-                            throw new FailedOutputException();
-                        }
-                        break;
+                    } catch (UnsupportedProtocolTypeException e) {
+                        log.error("UnsupportedProtocolType!!!");
+                    }
 
-                    default:
-                        throw new UnsupportedTypeNumberException();
+                    for (Wire outWire : outWires) {
+                        outWire.getMessageQue().add(responseMessage);
+
+                        // log.error(responseMessage.toString());
                     }
                 }
 
@@ -99,73 +98,22 @@ public class RuleEngine extends ActiveNode implements Input, Output {
             log.warn(e.getMessage());
         }
     }
-
     /**
-     * decimal Type = 10 ~ mqtt 20 ~ modbus ~1 = inDB ~2 = outDB ~3 = broadcast
+     * <p>입력되는 프로토콜에 따라 다른 JSONObject 값을 구분하여 특정 프로토콜을 찾는 함수입니다
+     * <p>각 JSONObject의 고유한 고유값을 받을 수 있으며 구분 할 수 있습니다.
+     * @param content
+     * <p>입력 받는 JSONObject 형식의 instance입니다. Protocol을 구멸 할 수 있는 Key : Value를 찾습니다.
+     * @return
+     * <p>지원이 가능한 Protocol이름을 String으로 반환합니다. 지원 가능한 Protocol은 클래스 상단 final로 선언되어 있습니다.
      */
-    public int typeExecute(JSONObject content) {
-        if (content.has("Type")) {
-            int decimal = content.getInt("Type");
-            return decimal;
+    public String checkProtocolType(JSONObject content) {
+        if (content.has("registerAddress")) {
+            return TYPE_MODBUS;
+        } else if ((content.has("devEui")) && (content.has("sensorType"))) {
+            return TYPE_MQTT;
         } else {
-            throw new UndefindedTypeException();
+            throw new UnsupportedProtocolTypeException();
         }
-    }
 
-    public JsonMessage sendMqttAndDB(JSONObject content) {
-        String euid = content.getString("devEui");
-        String sensor = content.getString("sensorType");
-        int value = content.getInt("value");
-        try {
-            repo.setDb(Euid,sensor,value);
-            JsonMessage sendJsonMessage = new JsonMessage(content);
-            return sendJsonMessage;
-        } catch (Exception e) {
-            log.warn("Do not have any keys");
-            return null;
-        }
     }
-
-    public JsonMessage dbToMqtt(JSONObject content) {
-        String euid = content.getString("devEui");
-        String sensor = content.getString("sensorType");
-        double value;
-        try {
-            value = repo.getDb(euid, sensor);
-            content.put("value", value);
-            JsonMessage sendMessage = new JsonMessage(content);
-            return sendMessage;
-        } catch (Exception e) {
-            log.warn("Do not have any sensor");
-            return null;
-        }
-        
-    }
-    // pdu 값에서 value 값을 추출하여 사용하기!
-    public boolean modbusToDB(JSONObject content) {
-        int registerID = content.getInt("registerAddress");
-        int value = content.getInt("value");
-        try{
-            repo.setDb(registerID, value);
-            return true;
-        }catch(Exception e){
-            return false;
-        }
-    }
-
-    public JsonMessage dbToModbus(JSONObject content) {
-        int registerID = content.getInt("registerAddress");
-        int value;
-        try {
-            value = repo.getDb(registerID);
-            content.put("value", value);
-            JsonMessage sendJsonMessage = new JsonMessage(content);
-            return sendJsonMessage;
-        } catch (Exception e) {
-            log.warn("Do not have registerId!");
-            return null;
-        }
-        
-    }
-
 }
