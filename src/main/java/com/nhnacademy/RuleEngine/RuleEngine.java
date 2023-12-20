@@ -19,8 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class RuleEngine extends ActiveNode implements Input, Output {
-    private final String TYPE_MQTT = "mqtt";
-    private final String TYPE_MODBUS = "modbus";
+    private static final String TYPE_MQTT = "mqtt";
+    private static final String TYPE_MODBUS = "modbus";
+
     private Repo repo;
     private Set<Wire> outWires = new HashSet<>();
     private Set<Wire> inWires = new HashSet<>();
@@ -31,8 +32,8 @@ public class RuleEngine extends ActiveNode implements Input, Output {
 
     public RuleEngine(String name, Repo repo) {
         super(name);
-        this.repo = repo;
 
+        this.repo = repo;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
             for (Wire inWire : inWires) {
                 var messageQ = inWire.getMessageQue();
                 if (!messageQ.isEmpty()) {
-                    JsonMessage responseMessage;
+                    JsonMessage responseMessage = null;
                     Message msg = messageQ.poll();
                     JSONObject content = ((JsonMessage) msg).getContent();
                     try {
