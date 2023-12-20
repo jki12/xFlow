@@ -56,7 +56,7 @@ public class InMemoryRepoArray implements Repo {
         for (int i = database.size() - 1; i >= 0; i--) {
             if (database.get(i).devEui.equals(devEui) && database.get(i).sensorType.equals(sensorType)) {
                 JSONObject inJson = new JSONObject();
-                JSONObject outJson = new JSONObject();
+
                 // inJson.put("number", database.get(i).number);
                 inJson.put("registerId", database.get(i).registerId);
                 inJson.put("devEui", database.get(i).devEui);
@@ -65,8 +65,7 @@ public class InMemoryRepoArray implements Repo {
                 inJson.put("value", database.get(i).value);
                 inJson.put("unitId", database.get(i).unitId);
 
-                outJson.put("requestData", inJson);
-                return outJson;
+                return inJson;
             }
         }
         throw new NoSuchElementException();
@@ -83,7 +82,7 @@ public class InMemoryRepoArray implements Repo {
         for (int i = database.size() - 1; i >= 0; i--) {
             if (database.get(i).registerId.equals(registerId)) {
                 JSONObject inJson = new JSONObject();
-                JSONObject outJson = new JSONObject();
+
                 // inJson.put("number", database.get(i).number);
                 inJson.put("registerId", database.get(i).registerId);
                 inJson.put("devEui", database.get(i).devEui);
@@ -92,8 +91,7 @@ public class InMemoryRepoArray implements Repo {
                 inJson.put("value", database.get(i).value);
                 inJson.put("unitId", database.get(i).unitId);
 
-                outJson.put("requestData", inJson);
-                return outJson;
+                return inJson;
             }
         }
         throw new NoSuchElementException();

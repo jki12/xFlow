@@ -14,6 +14,7 @@ import com.nhnacademy.message.Message;
 import com.nhnacademy.node.ActiveNode;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * rule engine에서 데이터를 받고, 그걸 재가공. 값을 modbus protocol에 맞춰 byte로 변환.
@@ -28,6 +29,7 @@ import lombok.Getter;
  * 
  */
 @Getter
+@Slf4j
 public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
 
     private final Set<Wire> inputWires = new HashSet<>();
@@ -58,7 +60,9 @@ public class ModbusMapperMtoR extends ActiveNode implements Input, Output {
             if (!messageQueue.isEmpty()) {
                 Message message = messageQueue.poll();
                 JSONObject content = ((JsonMessage) message).getContent();
-                int register = content.getInt("register");
+
+                log.debug(content.toString());
+                int register = Integer.parseInt(content.getString("registerId"));
                 int values = (int) content.getDouble("value");
                 convertToModbus(register, values);
             }
