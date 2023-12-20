@@ -3,14 +3,13 @@ package com.nhnacademy.exception;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Exception1 extends RuntimeException {
-    public static byte[] exception01Error(byte functionCode) {
+public class Exception04 extends RuntimeException {
+    public static byte[] exception04Error(byte functionCode) {
         byte[] errorBytes = new byte[2];
         errorBytes[0] = (byte)(functionCode + 80);  // error code
-        errorBytes[1] = 01;                         // exception code
+        errorBytes[1] = 04;                         // exception code
 
         log.error("Illegal Function");
         return errorBytes;
     }
-
 }
