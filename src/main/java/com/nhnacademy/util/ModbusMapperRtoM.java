@@ -70,7 +70,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
                     throw new IllegalArgumentException();
                 }
 
-                JSONArray value = content.getJSONArray(VALUE);
+                JSONObject value = content.getJSONObject(VALUE);
                 int registerAddress = content.getInt(REGISTER_ADDRESS);
 
                 readModbusData(value, registerAddress);
@@ -82,13 +82,14 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
      * @param value
      * @param registerAddress
      */
-    public void readModbusData(JSONArray value, int registerAddress) {
+    public void readModbusData(JSONObject value, int registerAddress) {
         JSONArray result = new JSONArray();
-        int byteCount = value.getInt(1);
+        int byteCount = value.getInt(VALUE);
 
         if (value.length() < byteCount + 2) {
             throw new IllegalArgumentException();
         }
+
         JSONObject convertData = convertToJson(registerAddress, result);
 
         spreadMessage(convertData);
