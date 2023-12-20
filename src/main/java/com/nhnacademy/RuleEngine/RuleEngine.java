@@ -54,7 +54,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
                     JsonMessage responseMessage;
                     Message msg = messageQ.poll();
                     JSONObject content = ((JsonMessage) msg).getContent();
-                    try {0
+                    try {
                         String protocolType = checkProtocolType(content);
                         switch (protocolType) {
                         case TYPE_MQTT:
