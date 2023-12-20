@@ -14,6 +14,7 @@ import com.nhnacademy.message.Message;
 import com.nhnacademy.node.ActiveNode;
 
 import lombok.Getter;
+import lombok.val;
 
 /**
  * 클래스 이름에 괄호가 안들어가져서 이렇게 이름 지음.
@@ -32,9 +33,7 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
     public final Set<Wire> outputWires = new HashSet<>();
 
     private static final String REGISTER_ADDRESS = "registerAddress";
-    private static final String PDU = "pdu";
     private static final String VALUE = "value";
-    private static final String QUANTITY = "quantity";
 
     public ModbusMapperRtoM(String name) {
         super(name);
@@ -71,46 +70,26 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
                     throw new IllegalArgumentException();
                 }
 
-                JSONArray pduData = content.getJSONArray(PDU);
+                JSONArray value = content.getJSONArray(VALUE);
                 int registerAddress = content.getInt(REGISTER_ADDRESS);
 
-                readModbusData(pduData, registerAddress);
+                readModbusData(value, registerAddress);
             }
         }
     }
 
     /**
-     * 
-     * @param pduData
+     * @param value
      * @param registerAddress
      */
-    public void readModbusData(JSONArray pduData, int registerAddress) {
-        int functionCode = pduData.getInt(0); // 7
-        int quantity = 0;
-        JSONArray value = new JSONArray();
+    public void readModbusData(JSONArray value, int registerAddress) {
+        JSONArray result = new JSONArray();
+        int byteCount = value.getInt(1);
 
-        if ((functionCode == 3) || (functionCode == 4)) {
-            quantity = ((pduData.getInt(2) << 8) | (pduData.getInt(3) & 0xFF));
-            int byteCount = pduData.getInt(1);
-
-            if (pduData.length() < byteCount + 2) {
-                throw new IllegalArgumentException();
-            } else {
-                for (int i = 0; i < byteCount; i++) {
-                    value.put(pduData.getInt(i + 2));
-                }
-            }
-
-        } else if ((functionCode == 6) || (functionCode == 16)) {
-            quantity = ((pduData.getInt(4) << 8) | (pduData.getInt(5) & 0xFF));
-
-            for (int i = 0; i < quantity; i++) {
-                value.put(pduData.getInt(i + 2));
-            }
-        } else {
-            // functionCode가 3,4 6,16이 아닐 경우에는 처리하지 않음.
+        if (value.length() < byteCount + 2) {
+            throw new IllegalArgumentException();
         }
-        JSONObject convertData = convertToJson(registerAddress, quantity, value);
+        JSONObject convertData = convertToJson(registerAddress, result);
 
         spreadMessage(convertData);
     }
@@ -122,11 +101,10 @@ public class ModbusMapperRtoM extends ActiveNode implements Input, Output {
      * @param value           sensor value
      * @return
      */
-    public JSONObject convertToJson(int registerAddress, int quantity, JSONArray value) {
+    public JSONObject convertToJson(int registerAddress, JSONArray value) {
         JSONObject jsonObject = new JSONObject();
 
         jsonObject.put(REGISTER_ADDRESS, registerAddress);
-        jsonObject.put(QUANTITY, quantity);
         jsonObject.put(VALUE, value);
 
         return jsonObject;
