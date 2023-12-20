@@ -22,9 +22,9 @@ import org.json.JSONObject;
 public class ModbusMasterNode extends ActiveNode implements Output {
     private static final int DEFUALT_INTERVAL = 1_000;
     private static final int DEFAULT_BUFFER_SIZE = 1024;
-    private static final short DEFAULT_ADDRESS = 101;
+    private static final short DEFAULT_ADDRESS = 0;
     private static final short DEFAULT_QUANTITY = 2;
-    private static final byte DEFAULT_FUNCTION_CODE = 4;
+    private static final byte DEFAULT_FUNCTION_CODE = 3;
 
     private final Set<Wire> outWires = new HashSet<>();
     private final Info info = new Info();
@@ -71,7 +71,6 @@ public class ModbusMasterNode extends ActiveNode implements Output {
                 try {
                     // header 부분
                     byte[] pdu = new byte[] { functionCode, address[0], address[1], quantity[0], quantity[1] };
-                    transactionId %= Short.MAX_VALUE;
                     byte[] mbap = Util.makeMBAP(++transactionId, (short) (pdu.length + 1), (byte) 1);
                     
                     client.getOutputStream().write(Util.concat(mbap, pdu));
@@ -88,9 +87,9 @@ public class ModbusMasterNode extends ActiveNode implements Output {
 
                     Message msg = new JsonMessage(content);
                     for (var wire : outWires) {
-                        info.increaseSendCount();
-
                         wire.getMessageQue().add(msg);
+                        
+                        info.increaseSendCount();
                     }
 
                     Thread.sleep(DEFUALT_INTERVAL);
@@ -109,5 +108,5 @@ public class ModbusMasterNode extends ActiveNode implements Output {
     @Override
     public void wireOut(Wire wire) {
         outWires.add(wire);
-    }    
+    }
 }

@@ -54,6 +54,10 @@ public class Util {
         return (short) ((high << 8) | (0xff & low));
     }
 
+    public static int toInteger(short high, short low) {
+        return (high << 16) | low;
+    }
+
     public static byte[] concat(byte[] mbap, byte[] pdu) {
         if (mbap == null || pdu == null) throw new IllegalArgumentException();
 
@@ -73,12 +77,12 @@ public class Util {
 
     /*
      * modbus response를 json 형식으로 바꿔주는 함수
-     * 0x04번 함수코드의 결과 처리
+     * 0x03번 함수코드의 결과 처리
      */
     public static JSONObject toJson(byte[] response, int length) {
         if (response == null || response.length < 9) throw new IllegalArgumentException();
 
-        if (response[7] != 0x04) throw new UnsupportedFunctionCodeException();
+        if (response[7] != 0x03) throw new UnsupportedFunctionCodeException();
 
         JSONObject obj = new JSONObject();
 
@@ -91,7 +95,7 @@ public class Util {
         // parsing pdu.
         obj.put("functionCode", response[7]);
         obj.put("byteCount", response[8]);
-        obj.put("value", Arrays.copyOfRange(response, 9, length));
+        obj.put("value", toShort(response[9], response[10]));
 
         return obj;
     }
