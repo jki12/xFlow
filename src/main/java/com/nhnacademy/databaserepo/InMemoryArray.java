@@ -17,7 +17,7 @@ public class InMemoryArray {
         String TEMPERATURE = "temperature";
         String HUMIDITY = "humidity";
         switch (registerId) {
-            case "101":
+            case "0":
 
                 this.registerId = registerId;
                 this.devEui = "24e124128c067999";

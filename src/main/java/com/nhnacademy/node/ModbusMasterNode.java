@@ -80,7 +80,7 @@ public class ModbusMasterNode extends ActiveNode implements Output {
                     int len = client.getInputStream().read(bytes);
 
                     info.increaseReceiveCount();
-                    log.debug("{}", Arrays.toString(Arrays.copyOfRange(bytes, 0, len)));
+                    // log.debug("{}", Arrays.toString(Arrays.copyOfRange(bytes, 0, len)));
 
                     JSONObject content = Util.toJson(bytes, len);
                     content.put("registerAddress", Util.toShort(address[0], address[1]));

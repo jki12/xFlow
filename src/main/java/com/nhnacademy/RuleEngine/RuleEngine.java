@@ -69,8 +69,9 @@ public class RuleEngine extends ActiveNode implements Input, Output {
                             
                             break;
                         case TYPE_MODBUS:
-                            if(repo.addData(content.getString("registerId"), content.getDouble("value"))){
-                                content = repo.getData(content.getString("registerId"));
+                            // TODO scale 같은건 한곳에 저장하거나 staic으로 설정해주세요.
+                            if(repo.addData(String.valueOf(content.getInt("registerAddress")), content.getInt("value") / 10.0)){
+                                content = repo.getData(String.valueOf(content.getInt("registerAddress")));
                                 responseMessage = new JsonMessage(content);
                             }else{
                                 log.error("Failed Input data !!");
@@ -87,6 +88,8 @@ public class RuleEngine extends ActiveNode implements Input, Output {
 
                     for (Wire outWire : outWires) {
                         outWire.getMessageQue().add(responseMessage);
+
+                        // log.error(responseMessage.toString());
                     }
                 }
 
@@ -104,7 +107,7 @@ public class RuleEngine extends ActiveNode implements Input, Output {
      * <p>지원이 가능한 Protocol이름을 String으로 반환합니다. 지원 가능한 Protocol은 클래스 상단 final로 선언되어 있습니다.
      */
     public String checkProtocolType(JSONObject content) {
-        if (content.has("registerId")) {
+        if (content.has("registerAddress")) {
             return TYPE_MODBUS;
         } else if ((content.has("devEui")) && (content.has("sensorType"))) {
             return TYPE_MQTT;

@@ -22,7 +22,7 @@ public class InMemoryRepoArray implements Repo {
      * 
      */
     @Override
-    public boolean add(String devEui, String sensorType, double value) {
+    public boolean addData(String devEui, String sensorType, double value) {
         try {
             return database.add(new InMemoryArray(devEui, sensorType, value));
         } catch (NoSuchElementException e) {
@@ -37,7 +37,7 @@ public class InMemoryRepoArray implements Repo {
      * 
      */
     @Override
-    public boolean add(String registerId, double value) {
+    public boolean addData(String registerId, double value) {
         try {
             return database.add(new InMemoryArray(registerId, value));
         } catch (NoSuchElementException e) {
