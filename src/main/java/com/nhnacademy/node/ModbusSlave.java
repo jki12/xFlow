@@ -8,23 +8,20 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.json.JSONObject;
 
 import com.nhnacademy.Input;
 import com.nhnacademy.Wire;
+import com.nhnacademy.exception.Exception01;
 import com.nhnacademy.exception.Exception02;
 import com.nhnacademy.exception.Exception03;
-import com.nhnacademy.exception.Exception1;
-import com.nhnacademy.exception.Exception4;
 import com.nhnacademy.message.JsonMessage;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ModbusSlave extends ActiveNode implements Input {
     private final Set<Wire> inWires = new HashSet<>();
-    private Map<Integer, String> database = new HashMap<>();
+    // private Map<Integer, String> buffer = new HashMap<>();
+    byte[] buffer = new byte[1024];
     private final int port;
 
     private Socket socket;
@@ -74,8 +72,6 @@ public class ModbusSlave extends ActiveNode implements Input {
         header[2] = 0;
         header[3] = 0;
         
-
-        // 내가 계산하는게 나을까 아님 pdu 길이를 가져오는게 나을까?
         // quantity * 2 
         int quantity = ((request[5] & 0xFF) << 8) | (request[6] & 0xFF) + 2;
         byte[] quantities = {(byte)(quantity >> 8), (byte)(quantity)};
@@ -85,11 +81,10 @@ public class ModbusSlave extends ActiveNode implements Input {
         header[6] = request[6];
 
         return header;
-        // System.arraycopy(header, 0, response, 0, header.length);
     }
 
     /**
-     * 연결된 wire에서 message가 들어오면 꺼내서 map에 저장한다
+     * 연결된 wire에서 message가 들어오면 꺼내서 저장
      */
     public void saveBuffer() {
         for (Wire wire : inWires) {
@@ -97,19 +92,19 @@ public class ModbusSlave extends ActiveNode implements Input {
                 JSONObject msg = ((JsonMessage) wire.getMessageQue().poll()).getContent();
                 int address = Integer.parseInt((String)msg.get("register address"));
                 String value = (String)msg.get("value");
-                database.put(address, value);
+                setData(address, value);
             }
         }
     }
 
     /**
-     * database 속에 저장된 data 찾아오기(encoding한 상태이므로 decoding하여 돌려준다)
+     * buffer 속에 저장된 data 찾아오기(encoding한 상태이므로 decoding하여 돌려준다)
      * @param address
      * @return
      */
     public byte[] getData(int address) {
-        byte[] decodedValue= Base64.getDecoder().decode(database.get(address));     
-        return decodedValue;
+        byte[] datas = {buffer[address], buffer[address + 1]}; 
+        return datas;
     }
     
     /**
@@ -118,7 +113,8 @@ public class ModbusSlave extends ActiveNode implements Input {
      * @param value
      */
     public void setData(int address, String value) {
-        database.put(address, value);
+        buffer[address] = value.getBytes()[0];
+        buffer[address + 1] = value.getBytes()[1];
     }
 
     /**
@@ -138,11 +134,11 @@ public class ModbusSlave extends ActiveNode implements Input {
                 data[i*2] = 0;
                 data[i*2+1] = 0;
             }else {
-                if (getData(address+i).length < 2){      // Data가 byte일 경우
+                if (getData(address+i).length < 2){
                     data[i*2] = 0;                // response[9+i*2] = 0;
                     data[i*2+1] = values[0];      // response[9+i*2+1] = values[0];
                 }
-                else {                                              // Data가 byte[]일 경우
+                else {
                     data[i*2] = values[0];
                     data[i*2+1] = values[1];
                 }
@@ -189,9 +185,9 @@ public class ModbusSlave extends ActiveNode implements Input {
         for (int i = 0; i < quantity; i++) {
             byte[] valuesByte = {pdu[i+6], pdu[i+7]};
             String value = Base64.getEncoder().encodeToString(valuesByte);
-            setData(address+i*2, value);
+            setData(address+i*2, value); // 010006130005
         }
-        
+        // Arrays.copyOf, Arrays.asList, Collections.addAll or System.arraycopy
         for (int i = 0; i < 5; i++) {
             responsePdu[i] = pdu[i];
         }
@@ -200,11 +196,18 @@ public class ModbusSlave extends ActiveNode implements Input {
     
     @Override
     public void preprocess() {
+        // TODO server니까 thread로 돌려주세요.
         try {
             ServerSocket serverSocket = new ServerSocket(port);
-            socket = serverSocket.accept();
-            outputStream = new BufferedOutputStream(socket.getOutputStream());
-            inputStream = new BufferedInputStream(socket.getInputStream());
+            new Thread(()-> {
+                try {
+                    socket = serverSocket.accept();
+                    outputStream = new BufferedOutputStream(socket.getOutputStream());
+                    inputStream = new BufferedInputStream(socket.getInputStream());
+                } catch (IOException e) {
+                    log.error(e.getMessage());
+                }
+            });
             
             // byte[] request = {0,1,0,0,0,6,1,3,0,0,0,5}; // fuction , address, counter
 
@@ -218,7 +221,15 @@ public class ModbusSlave extends ActiveNode implements Input {
         request = new byte[1024];
         try {
             while(socket.isConnected()) {
-                if ((requestLength = inputStream.read(request)) != -1){   // inputStream에 들어온게 request에 들어간다
+                // - - - - - - - - - - - - - - - 여기부터 - - - - - - - - - - - -
+                if ((requestLength = inputStream.read(request)) != -1) {   // inputStream에 들어온게 request에 들어간다
+                    for (int i = 0; i < 11; ++i) {
+                        if (request[i] > 0) request[i] -= '0';
+                    }
+
+                    request[11] = 0;
+
+                    log.debug(Arrays.toString(request));
                     // if((request.length > 7)&&(6 + request[5]) == requestLength) {
                     // }
                     
@@ -307,7 +318,7 @@ public class ModbusSlave extends ActiveNode implements Input {
                         break;
 
                         default:
-                            errorBytes = Exception1.exception01Error(functionCode);
+                            errorBytes = Exception01.exception01Error(functionCode);
                             // >> ? 이건 rsp 어케 써야하는거야?? => 걍 request에다가 error 코드만 더함
                             // log.info("Unsupported function code : " + functionCode);
                             System.arraycopy(request, 0, response, 0, 7);
